@@ -1,0 +1,54 @@
+/* Tablet: sidebar becomes an off-canvas drawer */
+@media (max-width: 1099px) {
+  .sidebar {
+    position: fixed; inset-block: 0; inset-inline-start: 0; height: 100%; box-shadow: var(--shadow-lg);
+    transform: translateX(100%); transition: transform 0.25s var(--ease); visibility: hidden;
+  }
+  [dir="ltr"] .sidebar { transform: translateX(-100%); }
+  .sidebar.is-open { transform: none; visibility: visible; }
+  .sidebar-close { display: inline-grid; }
+  .menu-toggle { display: inline-grid; }
+  .topbar-logo { display: inline-flex; }
+  .topbar-logo img { width: 32px; height: 32px; }
+  .topbar-logo .logo-ar { font-size: 1.25rem; }
+  .topbar-logo .logo-en { display: none; }
+  .flow { grid-template-columns: repeat(3, 1fr); }
+  .info-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  :root { --topbar-h: 58px; }
+  .topnav { display: none; }
+  .topbar { padding-inline: 12px; justify-content: space-between; }
+  .container, .container-wide { padding-inline: 16px; }
+  .hero { padding: 28px 16px 24px; min-height: auto; align-items: start; }
+  .hero-arches span { width: 30%; height: 60%; }
+  .hero-arches span:nth-child(3) { display: none; }
+  .logo-lg img { width: 64px; height: 64px; }
+  .logo-lg .logo-ar { font-size: 2.4rem; }
+  .hero .subtitle { font-size: var(--fs-md); margin-bottom: 20px; }
+  /* Suggestions become a swipeable row so the composer stays near the top of the fold */
+  .suggestion-list { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 78%; overflow-x: auto;
+    scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .suggestion-list li { scroll-snap-align: start; }
+  .thread { padding: 18px 14px 8px; gap: 20px; }
+  .chat-composer-wrap { padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); }
+  .composer { border-radius: var(--r-lg); padding: 6px 6px 6px 8px; }
+  .composer textarea { min-height: 44px; padding: 8px 6px; }
+  .send-btn { width: 46px; height: 46px; }
+  .msg { gap: 8px; }
+  .msg-bot .avatar { display: none; }
+  .msg-user .avatar { display: none; }
+  .msg-user .bubble { max-width: 92%; }
+  .answer-card { padding: 14px; }
+  .answer-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .answer-actions .btn { white-space: normal; text-align: center; min-height: 44px; }
+  .source-grid { grid-template-columns: 1fr; }
+  .footer-inner { grid-template-columns: 1fr; gap: 12px; padding: 18px 16px; }
+  .flow, .info-grid, .model-grid { grid-template-columns: 1fr; }
+  .page-head { padding: 24px 0 14px; }
+  .dialog { width: 100vw; max-height: 92vh; border-radius: var(--r-xl) var(--r-xl) 0 0; margin-bottom: 0; }
+  .stored-text { flex-direction: column; }
+  .verify-form .row .btn { width: 100%; }
+}
