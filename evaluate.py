@@ -4,7 +4,7 @@ Recall@k here is the share of questions with at least one expected unit in the t
 Units: hadith:<id> or ayah:<surah>:<ayah>; a tafsir record counts as its ayah.
 Only items with verified=true and a non-empty expected list are scored."""
 import argparse, json, time
-from retrieve import get_retriever
+from retrieve import get_retriever, Retriever
 
 KS = (1, 3, 10)
 VARIANTS = {
@@ -65,6 +65,32 @@ def breakdown(items, per):
     return {g: score(r) for g, r in sorted(groups.items())}
 
 
+def e2e(items, search, rerank):
+    """Full pipeline in retrieval mode: does it abstain on negatives, and do the shown texts contain an expected unit?"""
+    import evidence
+    from answer import answer
+    evidence.SEARCH, evidence.RERANK = search, rerank
+    out = {"answered_pos": 0, "hit_pos": 0, "n_pos": 0, "abstain_neg": 0, "n_neg": 0, "per_item": []}
+    for it in items:
+        o = answer(it["question"], mode="retrieval")
+        shown = {u for u in (unit_of(e) for e in o["texts"]) if u}
+        if it["type"] == "negative":
+            out["n_neg"] += 1
+            out["abstain_neg"] += o["status"] == "insufficient"
+        else:
+            out["n_pos"] += 1
+            out["answered_pos"] += o["status"] in ("answer", "referral", "identified")
+            out["hit_pos"] += bool(shown & set(it["expected"]))
+        out["per_item"].append({"id": it["id"], "status": o["status"], "hit": bool(shown & set(it["expected"]))})
+    return out
+
+
+def unit_of(e):
+    if e["kind"] == "hadith":
+        return f"hadith:{e['id']}"
+    return e.get("unit")
+
+
 def table(rows):
     head = "| variant | n | R@1 | R@3 | R@10 | MRR | s/query |\n|---|---|---|---|---|---|---|"
     lines = [f"| {name} | {m['n']} | {m['R@1']} | {m['R@3']} | {m['R@10']} | {m['MRR']} | {m['sec']} |" for name, m in rows]
@@ -81,7 +107,19 @@ if __name__ == "__main__":
     ap.add_argument("--dense-norm", action="store_true", help="embed norm(query) instead of clean(query)")
     ap.add_argument("--rewrites", choices=["none", "rules", "llm"], default="none")
     ap.add_argument("--out", default="")
+    ap.add_argument("--e2e", default="", help="comma list of search configs: legacy,hybrid,hybrid+rerank")
     a = ap.parse_args()
+    if a.e2e:
+        items = [it for it in json.load(open(a.eval, encoding="utf-8"))["items"] if it.get("verified") is True]
+        res = {}
+        for cfg in a.e2e.split(","):
+            res[cfg] = e2e(items, "legacy" if cfg == "legacy" else "hybrid", cfg.endswith("rerank"))
+            m = res[cfg]
+            print(f"{cfg:14s} positives answered {m['answered_pos']}/{m['n_pos']} | expected text shown "
+                  f"{m['hit_pos']}/{m['n_pos']} | negatives abstained {m['abstain_neg']}/{m['n_neg']}")
+        if a.out:
+            json.dump(res, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        raise SystemExit
     items, skipped = load_items(a.eval, set(a.types.split(",")))
     print(f"scored items: {len(items)} | excluded (unverified): {skipped}")
     r = get_retriever(a.db, a.vec, "all", a.dense_norm)
@@ -93,6 +131,7 @@ if __name__ == "__main__":
         rw = lambda q: understand(q, backend="rules" if a.rewrites == "rules" else None)["rewrites"]
     rows, report = [], {}
     for name in a.variants.split(","):
+        Retriever.qvec.cache_clear()
         ranks, per, sec = run(r, items, VARIANTS[name], rw)
         m = score(ranks)
         m["sec"] = sec

@@ -1,0 +1,261 @@
+{
+ "description": "Gulf-dialect hold-out written after understand.GULF was frozen; used only to check the rules rewrites. Expected IDs reuse verified targets from eval_set.json.",
+ "items": [
+  {
+   "id": "g01",
+   "question": "شنهو الشي اللي يخلي الشغل مقبول عند الله؟ النية؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1",
+    "hadith:6445",
+    "hadith:6696",
+    "hadith:12068"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h01; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g02",
+   "question": "ابغى اعرف حدود حق اللي ساكن جنبي",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5786",
+    "hadith:5787",
+    "hadith:13799",
+    "hadith:13801",
+    "hadith:5790",
+    "hadith:5904",
+    "hadith:6236",
+    "hadith:7357",
+    "hadith:7358",
+    "hadith:7360"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h04; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g03",
+   "question": "امي ولا ابوي، مين له الأولوية في البر؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5743",
+    "hadith:13618"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h05; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g04",
+   "question": "هل فيه حديث عن تنظيف الاسنان قبل الصلاة؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:866",
+    "hadith:6966",
+    "hadith:7772"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h06; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g05",
+   "question": "اللي يصوم الشهر الفضيل ومحتسب، وش يحصل له؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:38",
+    "hadith:1833",
+    "hadith:1941",
+    "hadith:8950"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h08; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g06",
+   "question": "كيف اعرف اذا الواحد فيه نفاق؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:33",
+    "hadith:2574",
+    "hadith:2637",
+    "hadith:5863",
+    "hadith:7394",
+    "hadith:7396"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h16; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g07",
+   "question": "البنت تقدر تطلع سفر طويل من دون ابوها او اخوها؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1055",
+    "hadith:1056",
+    "hadith:1159",
+    "hadith:1794",
+    "hadith:1923",
+    "hadith:10413",
+    "hadith:10416",
+    "hadith:10418",
+    "hadith:10427"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h20; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g08",
+   "question": "وش اقول اذا احد عطس جنبي؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5989",
+    "hadith:5991",
+    "hadith:14580"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h23; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g09",
+   "question": "الكذب وش يوصل له الانسان؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5862",
+    "hadith:13751",
+    "hadith:13752",
+    "hadith:13753"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h24; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g10",
+   "question": "اللي يتكلم عن الناس من وراهم وش اسمه؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:13708"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h25; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g11",
+   "question": "وش ثواب اللي يربي يتيم عنده؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5094",
+    "hadith:5777",
+    "hadith:14561"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h30; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g12",
+   "question": "تراني ناسي وشربت ماي في رمضان، صيامي خربان؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:9877"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h35; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g13",
+   "question": "زكاة العيد كم لازم اطلع؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1451",
+    "hadith:1452",
+    "hadith:1454",
+    "hadith:9440",
+    "hadith:9441",
+    "hadith:9444",
+    "hadith:9445",
+    "hadith:9446",
+    "hadith:9447"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h36; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g14",
+   "question": "محتار بين شغلتين، وش الصلاة اللي اصليها؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1132",
+    "hadith:7108"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as h37; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g16",
+   "question": "ابي الآية اللي فيها كتب عليكم الصيام",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:183"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as a01; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g17",
+   "question": "وش يقول القرآن عن اللي يستلفون فلوس؟ لازم يكتبون؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:282"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as a19; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g18",
+   "question": "كم يقعد البنت بعد ما يتوفى رجلها قبل لا تتزوج؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:234"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as a10; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g19",
+   "question": "البنات والعيال كيف ياخذون من الورث؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:4:11"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as a08; question written after the lexicon was frozen"
+  },
+  {
+   "id": "g20",
+   "question": "في القرآن الصبر والصلاة يعينون الواحد؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:153"
+   ],
+   "verified": true,
+   "evidence": "same verified targets as a13; question written after the lexicon was frozen"
+  }
+ ]
+}
