@@ -187,5 +187,16 @@ def health():
 
 
 if os.environ.get("BASEERAH_SERVE_FRONTEND") == "1":
+    from fastapi.responses import Response
     from fastapi.staticfiles import StaticFiles
+
+    @app.get("/js/config.js", include_in_schema=False)
+    def frontend_config():
+        """When this API serves the site, the site calls back to the same origin, whatever host name the
+        browser used (localhost, 127.0.0.1, a domain), so no CORS setup is needed."""
+        cfg = {"API_BASE_URL": "", "USE_MOCK": False, "REQUEST_TIMEOUT_MS": int(os.environ.get("BASEERAH_TIMEOUT_MS", "90000")),
+               "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "")}
+        return Response(f"window.BASEERAH_CONFIG = {json.dumps(cfg, ensure_ascii=False)};\n",
+                        media_type="application/javascript", headers={"Cache-Control": "no-store"})
+
     app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")
