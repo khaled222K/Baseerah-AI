@@ -382,8 +382,8 @@ Latest run: 46 passed.
 
 ## Licenses and attribution
 
-**Baseerah's own code:** the repository has no license file yet. Until the team adds one, all rights are reserved by the
-authors.
+**Baseerah's own code and documentation:** MIT License (see [LICENSE](LICENSE)). It does not cover the texts, data or
+models below.
 
 **Third-party parts** keep their own licenses:
 
