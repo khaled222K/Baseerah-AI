@@ -35,7 +35,7 @@ VERIFY_MESSAGES = {
 log = logging.getLogger("baseerah")
 app = FastAPI(title="Baseerah")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["GET", "POST"],
-                   allow_headers=["Content-Type"])
+                   allow_headers=["Content-Type", "ngrok-skip-browser-warning"])
 
 
 @app.exception_handler(Exception)

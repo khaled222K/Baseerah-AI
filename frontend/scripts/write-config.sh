@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render Static Site build step: writes js/config.js from environment variables.
+# Static-site build step (Render or Vercel): writes js/config.js from environment variables.
 #   API_BASE_URL        backend URL, e.g. https://baseerah-api.onrender.com (empty = same origin)
 #   USE_MOCK            "true" to run the UI on mock data (default false)
 #   REQUEST_TIMEOUT_MS  request timeout in ms (default 90000)

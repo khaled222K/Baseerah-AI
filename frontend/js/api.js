@@ -18,14 +18,26 @@ class ApiError extends Error {
   }
 }
 
+// A backend exposed through an ngrok tunnel (e.g. the API on your own computer) answers browser requests with a
+// warning page unless this header is sent.
+const NGROK = /\.ngrok(-free)?\.(app|dev|io)$/;
+function tunnelHeaders() {
+  try {
+    return NGROK.test(new URL(config.apiBaseUrl).hostname) ? { "ngrok-skip-browser-warning": "1" } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function request(path, { method = "GET", body } = {}) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), config.timeoutMs);
   let res;
   try {
+    const headers = { ...tunnelHeaders(), ...(body ? { "Content-Type": "application/json" } : {}) };
     res = await fetch(`${config.apiBaseUrl}${path}`, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });
