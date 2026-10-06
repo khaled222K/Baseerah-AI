@@ -2,6 +2,7 @@ import argparse, json, os, re
 import envfile  # noqa: F401  (loads .env before settings are read)
 from build_hadith_db import norm
 from evidence import assess, MESSAGES, T_LEX, hadith_evidence, open_db
+from understand import non_arabic
 from verify import MARKS
 
 MAX_HADITH, MAX_TAFSIR, MAX_AYAH = 3, 2, 2
@@ -15,6 +16,14 @@ DISCLOSURE = "هذه الإجابة من أداة مدعومة بالذكاء ا
 GENERATED_LABEL = "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)"
 RETRIEVAL_ONLY = "وضع الاسترجاع فقط: تُعرض النصوص المرتبطة بالسؤال بمراجعها كما هي دون شرح مولَّد."
 IDENTIFIED = "يبدو أن المكتوب جزء من حديث أو وصفٌ له، وهذه أقرب المطابقات من القاعدة كما هي."
+AYAH_EXACT = "النص المكتوب جزء من آية قرآنية، وهذه الآية كما في المصحف مع موضعها."
+AYAH_ALTERED = ("تنبيه: الصيغة المكتوبة لا تطابق نص الآية حرفياً؛ فيها كلمة أو أكثر مختلفة عن المصحف. "
+                "هذا نص الآية الصحيح كما في المصحف مع موضعها (السورة: الآية)، ولا يُعتمد على الصيغة المكتوبة.")
+NON_ARABIC = ("Baseerah searches Arabic sources and answers in Arabic; the texts below are shown in Arabic exactly as stored. "
+              "تبحث بصيرة في مصادر عربية وتجيب بالعربية، وتُعرض النصوص كما هي.")
+NO_TRANSLATION = ("لا تترجم بصيرة النصوص أو المصطلحات؛ تُعرض النصوص العربية المرتبطة بالمصطلح من مصادرها كما هي. "
+                  "Baseerah does not translate; it shows the Arabic source texts related to the term.")
+TRANSLATE = re.compile(r"translat|ترجم", re.I)
 MODES = ("retrieval", "anthropic", "openai")
 
 SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية المتاحة له فقط، ولست مفتياً.
@@ -26,6 +35,11 @@ SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية ال
 4. إن كان السؤال عن حالة شخصية فلا تحكم على الحالة، واذكر أنها تحتاج الرجوع إلى أهل العلم.
 5. لا تذكر اسم راوٍ أو كتاباً أو رقماً غير موجود في النصوص المرفقة.
 6. اشرح ما يدل عليه لفظ النص المرفق فيما يخص السؤال فقط، دون استنتاج أحكام جديدة. إن رُفق توضيح مع حديث فهو المرجع في بيان معناه فانقله بإيجاز.
+7. إن بُني السؤال على فهم خاطئ (مثل أن المسلمين يعبدون مكاناً أو شخصاً) فصحّحه بلطف وهدوء من النصوص المرفقة فقط، دون اتهام السائل.
+8. إن كان في السؤال سخرية أو حدة فلا تجارِها ولا تعلّق عليها، وأجب عن أصل السؤال بهدوء وأدب.
+9. لا تقل "أجمع العلماء" أو "اتفق المسلمون" إلا إن نصّ على ذلك نصٌّ مرفق. فرّق بين ما يدل عليه النص صراحة وما هو اجتهاد يختلف فيه العلماء.
+10. إن كان في السؤال مصطلح شرعي فاشرح معناه بكلمات يومية بسيطة أولاً ثم اذكر المصطلح، واكتب الشرح بالعربية دائماً ولو كان السؤال بلغة أخرى.
+11. إن طلب المستخدم حديثاً بلفظ معيّن ولم يرد هذا اللفظ في النصوص المرفقة فقل إنه لم يُوجد بهذا اللفظ في المصادر المتاحة، ولا تنسبه إلى النبي ﷺ، ثم بيّن ما تدل عليه النصوص المرفقة.
 أخرج JSON فقط بهذا الشكل دون أي نص خارجه:
 {"relevant": true, "used": ["H1", "T1"], "explanation": "..."}"""
 
@@ -35,9 +49,15 @@ FALLBACK_MODELS = {"claude-sonnet-5-5", "claude-opus-5-5", "claude-opus-5", "cla
 LLM_MAX_TOKENS = 16000  # current Claude models think before answering, and thinking counts toward max_tokens
 
 
+def llm_timeout(backend):
+    """Seconds per LLM request. Below the site's request timeout (90 s / 300 s), so a stuck model ends in the
+    texts-only fallback instead of the SDK default (600 s with 2 retries)."""
+    return float(os.environ.get("BASEERAH_LLM_TIMEOUT", "240" if backend == "openai" else "75"))
+
+
 def anthropic_call(system, user, max_tokens=LLM_MAX_TOKENS):
     import anthropic
-    client = anthropic.Anthropic()  # ANTHROPIC_API_KEY from the environment / .env
+    client = anthropic.Anthropic(timeout=llm_timeout("anthropic"), max_retries=1)  # ANTHROPIC_API_KEY from the environment / .env
     kw = dict(model=MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": user}])
     if MODEL in FALLBACK_MODELS and os.environ.get("BASEERAH_FALLBACKS", "1") != "0":
         try:
@@ -56,7 +76,8 @@ def anthropic_call(system, user, max_tokens=LLM_MAX_TOKENS):
 def llm_call(system, user, backend=None):
     if (backend or BACKEND) == "openai":
         from openai import OpenAI
-        client = OpenAI(base_url=os.environ.get("BASEERAH_BASE_URL") or None, api_key=os.environ.get("OPENAI_API_KEY", "local"))
+        client = OpenAI(base_url=os.environ.get("BASEERAH_BASE_URL") or None, api_key=os.environ.get("OPENAI_API_KEY", "local"),
+                        timeout=llm_timeout("openai"), max_retries=0)  # a retry would not help a busy local CPU
         msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         try:  # every Baseerah prompt asks for JSON; JSON mode makes small local models comply
             r = client.chat.completions.create(model=MODEL, messages=msgs, response_format={"type": "json_object"})
@@ -146,9 +167,20 @@ def quotes_ok(explanation, texts):
 def records_only(out, units, reason):
     out["texts"] = [e for _, e in units]
     out["explanation"] = None
-    out["notice"] = NO_MODEL
+    out["notice"] = " ".join(filter(None, [out["notice"], NO_MODEL]))
     out["error"] = reason
     return out
+
+
+def quoted_ayah(query, db_path, vec_path):
+    """(ayah evidence, exact?) when the user typed (part of) an ayah, possibly with altered words; else (None, None).
+    The ayah text comes from the database; the user's wording is never echoed back."""
+    from check import check
+    r = check(query, db_path, vec_path)
+    m = r.get("match")
+    if not m or m["kind"] != "ayah" or r["status"] not in ("matched", "partial_match"):
+        return None, None
+    return m, r.get("exact", False)
 
 
 def identified(query, u, db_path, vec_path):
@@ -175,18 +207,24 @@ def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
     out = {"status": None, "message": None, "texts": [], "explanation": None, "mode": mode,
            "disclosure": DISCLOSURE, "generated_label": GENERATED_LABEL, "notice": None, "error": None,
            "understanding": u}
+    notes = [NO_TRANSLATION] if TRANSLATE.search(query) else [NON_ARABIC] if non_arabic(query) else []
+    if len(norm(query).split()) >= 3 and not re.search(r"[؟?]", query):
+        ayah, exact = quoted_ayah(query, db_path, vec_path)
+        if ayah:
+            out.update(status="identified", message=AYAH_EXACT if exact else AYAH_ALTERED, texts=[ayah])
+            return out
     ident = identified(query, u, db_path, vec_path) if len(norm(query).split()) >= 2 else []
     if ident:
         out.update(status="identified", message=IDENTIFIED, texts=ident)
         return out
     a = assess(query, db_path, vec_path, rewrites=tuple(u["rewrites"]))
-    out.update(status=a["status"], message=a["message"])
-    if a["status"] in ("insufficient", "clarify"):
+    out.update(status=a["status"], message=a["message"], notice=" ".join(notes) or None)
+    if a["status"] in ("insufficient", "clarify") or not a["evidence"]:
         return out
     units = pick(a["evidence"])
     if mode == "retrieval":
         out["texts"] = [e for _, e in units]
-        out["notice"] = RETRIEVAL_ONLY
+        out["notice"] = " ".join([*notes, RETRIEVAL_ONLY])
         return out
     try:
         verdict = parse(llm_call(SYSTEM, f"<question>\n{query}\n</question>\n\n<texts>\n{build_context(units)}\n</texts>",
@@ -204,7 +242,7 @@ def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
     if quotes_ok(verdict["explanation"], out["texts"]) and script_ok(verdict["explanation"]):
         out["explanation"] = verdict["explanation"]
     else:
-        out["notice"] = BAD_QUOTE
+        out["notice"] = " ".join(filter(None, [out["notice"], BAD_QUOTE]))
     return out
 
 

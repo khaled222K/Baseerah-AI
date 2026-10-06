@@ -21,6 +21,8 @@ MESSAGES = {
     "answer": "وُجدت نصوص مرتبطة بالسؤال. تُعرض كما هي مع مصدرها وحكمها، والتوسع فيها شرحٌ مولَّد وليس نصاً شرعياً.",
     "referral": "وُجدت نصوص عامة مرتبطة بالموضوع، لكن السؤال يخص حالة شخصية، ولا يستقل النظام بالفتوى. يُرجى سؤال أهل العلم أو جهة الفتوى المختصة.",
     "clarify": "السؤال قصير ولا يكفي لتحديد المقصود. يرجى كتابة سؤالك بجملة كاملة.",
+    "referral_none": "السؤال يخص حالة شخصية، ولم أجد في المصادر المتاحة نصاً مباشراً فيها، ولا يستقل النظام بالفتوى. "
+                     "يُرجى سؤال أهل العلم أو جهة الفتوى المختصة في بلدك.",
     "insufficient": "لم أجد نصاً مباشراً مرتبطاً بالسؤال في المصادر المتاحة، ولن أجتهد في الجواب. يمكن إعادة صياغة السؤال أو سؤال أهل العلم.",
 }
 
@@ -42,6 +44,11 @@ def coverage(query, text):
         return 0.0
     words = {strip_al(w) for w in norm(text or "").split()}
     return round(sum(t in words for t in terms) / len(terms), 2)
+
+
+def word_count(query):
+    """Words in any script: an English question must not be mistaken for a one-word query."""
+    return len(re.findall(r"[^\W\d_]+", query or ""))
 
 
 def reranked_ok(item):
@@ -78,7 +85,7 @@ def open_db(db_path):
 
 
 def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=None):
-    if len(norm(query).split()) < 2:
+    if word_count(query) < 2:
         return {"status": "clarify", "message": MESSAGES["clarify"], "evidence": [], "raw": []}
     res = search(query, db_path, vec_path, k, how, rewrites, rerank)
     db = open_db(db_path)
@@ -101,14 +108,12 @@ def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=N
                              "ref": f["reference"], "text": f["text_original"], "url": f["url"],
                              "source": "القرآن الكريم (مجمع الملك فهد)", "similarity": r["similarity"], "lex": True,
                              "coverage": coverage(query, f["text_search"])})
-    if not evidence:
-        status = "insufficient"
-    elif is_personal(query):
-        status = "referral"
+    if is_personal(query):
+        status, key = "referral", "referral" if evidence else "referral_none"
     else:
-        status = "answer"
+        status = key = "answer" if evidence else "insufficient"
     raw = [(x["similarity"], x["lex"]) for x in res["hadith"]] + [(x["similarity"], x["lex"]) for x in res["records"] if x["type"] == "tafsir"]
-    return {"status": status, "message": MESSAGES[status], "evidence": evidence, "raw": raw}
+    return {"status": status, "message": MESSAGES[key], "evidence": evidence, "raw": raw}
 
 
 EVAL = [

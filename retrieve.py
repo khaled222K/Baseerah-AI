@@ -9,6 +9,7 @@ from semantic import load_model, prefix, clean, terms_query, QURAN_WORDS
 RRF_K = 60
 POOL = 50
 RERANK_POOL = 30
+RERANK_REWRITES = 2  # rewrites also scored by the reranker (each adds ~1.4 s on CPU)
 RERANKER = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 MODES = ("fts", "vector", "hybrid")
 
@@ -113,8 +114,13 @@ class Retriever:
         rr = {}
         if rerank and order:
             pool = order[:RERANK_POOL]
-            scores = load_reranker(reranker).predict([(query, self.passage(key)) for key in pool])
-            rr = dict(zip(pool, map(float, scores)))
+            # Each passage keeps its best score over the question and its formal-Arabic rewrites: the cross-encoder
+            # misjudges dialect and long framing ("هل كل المسلمين يتفقون على ...") that a rewrite has removed.
+            qs = list(dict.fromkeys([query, *rewrites[:RERANK_REWRITES]]))
+            passages = [self.passage(key) for key in pool]
+            scores = load_reranker(reranker).predict([(q, p) for q in qs for p in passages])
+            best = np.max(np.asarray(scores, dtype=np.float32).reshape(len(qs), len(pool)), axis=0)
+            rr = dict(zip(pool, map(float, best)))
             order = sorted(pool, key=rr.get, reverse=True) + order[RERANK_POOL:]
         hits = []
         for key in order[:k]:
