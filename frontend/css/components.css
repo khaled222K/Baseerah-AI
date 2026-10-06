@@ -54,11 +54,20 @@
 .nav a .icon { color: var(--rose-700); }
 .sidebar-section-title { font-size: var(--fs-xs); font-weight: 600; color: var(--muted); padding: 10px 12px 4px; margin: 0; }
 .history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.history-item { position: relative; display: flex; align-items: center; }
 .history a {
-  display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: var(--r-md);
-  color: var(--text); text-decoration: none; font-size: var(--fs-sm);
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 7px 12px; padding-inline-end: 40px;
+  border-radius: var(--r-md); color: var(--text); text-decoration: none; font-size: var(--fs-sm);
 }
-.history a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history a .history-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-time { flex: none; font-size: var(--fs-xs); color: var(--muted); font-weight: 400; }
+.history-delete {
+  position: absolute; inset-inline-end: 4px; width: 32px; height: 32px; display: grid; place-items: center;
+  background: none; border: 0; border-radius: var(--r-md); color: var(--muted); opacity: 0;
+}
+.history-item:hover .history-delete, .history-delete:focus-visible, .history-item:focus-within .history-delete { opacity: 1; }
+.history-delete:hover { background: var(--rose-100); color: var(--danger); }
+@media (hover: none) { .history-delete { opacity: 1; } }
 .history a:hover { background: var(--rose-50); }
 .history a[aria-current="true"] { background: var(--rose-100); color: var(--plum); font-weight: 600; }
 .history .icon { color: var(--muted); width: 16px; height: 16px; }

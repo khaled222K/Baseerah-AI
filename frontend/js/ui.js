@@ -2,7 +2,7 @@
 // Dynamic content is always inserted with textContent / DOM nodes, never as HTML.
 import { icon } from "./icons.js";
 import { config, explain } from "./api.js";
-import { listConversations, listSaved } from "./storage.js";
+import { listConversations, listSaved, deleteConversation } from "./storage.js";
 
 export const SLOGAN = "إجابةٌ تستند إلى أصل.";
 export const SUBTITLE = "محتوى شرعي قابل للتتبع إلى مصدره.";
@@ -139,8 +139,20 @@ function renderHistory() {
     list.append(el("li", {}, el("p", { class: "history-empty", text: "لا توجد محادثات سابقة بعد. ابدئي بطرح سؤال." })));
   }
   convs.slice(0, expanded ? convs.length : HISTORY_SHOWN).forEach((c) => {
-    list.append(el("li", {}, el("a", { href: `index.html?c=${encodeURIComponent(c.id)}`, title: c.title,
-      "aria-current": c.id === currentConversation ? "true" : null }, icon("chat"), el("span", { text: c.title }))));
+    const when = historyTime(c.updatedAt || c.createdAt);
+    const remove = () => {
+      deleteConversation(c.id);
+      toast("حُذفت المحادثة");
+      // Deleting the open conversation returns to a new one.
+      if (c.id === currentConversation) location.href = "index.html?new=1";
+    };
+    list.append(el("li", { class: "history-item" },
+      el("a", { href: `index.html?c=${encodeURIComponent(c.id)}`, title: c.title,
+        "aria-current": c.id === currentConversation ? "true" : null },
+        icon("chat"), el("span", { class: "history-title", text: c.title }),
+        when ? el("time", { class: "history-time", datetime: new Date(c.updatedAt || c.createdAt).toISOString(), text: when }) : null),
+      el("button", { class: "history-delete", type: "button", "aria-label": `حذف المحادثة: ${c.title}`, title: "حذف المحادثة",
+        onclick: remove }, icon("trash", "icon-sm"))));
   });
   more.hidden = convs.length <= HISTORY_SHOWN;
   more.textContent = expanded ? "عرض أقل" : "عرض المزيد...";
@@ -238,6 +250,16 @@ export const formatDate = (ts) => {
     return new Date(ts).toLocaleString();
   }
 };
+// Short label that tells apart conversations with the same title: time today, otherwise the date.
+function historyTime(ts) {
+  if (!ts) return "";
+  try {
+    const d = new Date(ts);
+    const today = new Date().toDateString() === d.toDateString();
+    return new Intl.DateTimeFormat("ar", today ? { timeStyle: "short" } : { day: "numeric", month: "short" }).format(d);
+  } catch { return ""; }
+}
+
 export const formatTime = (ts) => {
   try { return new Intl.DateTimeFormat("ar", { timeStyle: "short" }).format(new Date(ts)); } catch { return ""; }
 };

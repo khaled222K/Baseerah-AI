@@ -83,7 +83,8 @@ def run(browser):
         expect(page.locator(".subtitle")).to_have_text("محتوى شرعي قابل للتتبع إلى مصدره.")
         expect(page.locator("#chat")).to_be_hidden()
         expect(page.locator("#saved-badge")).to_be_hidden()
-        assert page.locator(".suggestion").count() == 3
+        assert page.locator(".suggestion").count() == 5
+        expect(page.locator(".suggestion").first).to_have_text("هل يجوز إجبار المرأة على النقاب؟")
         ask(page, "ما حق الجار في الإسلام؟")
         expect(page.locator(".loader")).to_be_visible()
         page.wait_for_selector(".answer-actions", timeout=90000)
@@ -138,6 +139,19 @@ def run(browser):
         expect(page.locator(".msg-user .bubble")).to_contain_text("ما حق الجار")
     check("real: conversation saved to history and reopens", history_reload)
 
+    def history_dedupe_delete():
+        page.goto(f"{REAL}/index.html?new=1")
+        ask(page, "ما حق الجار في الإسلام؟")
+        page.wait_for_selector(".answer-actions", timeout=90000)
+        expect(page.locator("#history-list a")).to_have_count(1)  # same single question: one thread, not two
+        expect(page.locator("#history-list .history-time").first).not_to_be_empty()
+        page.locator("#history-list a").first.hover()
+        page.get_by_role("button", name=re.compile("حذف المحادثة")).first.click()
+        page.wait_for_url(re.compile(r"index\.html"))
+        expect(page.locator("#hero")).to_be_visible()
+        expect(page.locator("#history-list")).to_contain_text("لا توجد محادثات سابقة")
+    check("real: asking the same question again keeps one thread; delete removes it", history_dedupe_delete)
+
     def saved_page():
         page.goto(f"{REAL}/saved.html")
         expect(page.locator(".saved-card")).to_have_count(1)
@@ -183,6 +197,7 @@ def run(browser):
         expect(page.locator(".metric-table")).to_be_visible(timeout=30000)
         expect(page.locator(".metric-table")).to_contain_text("52.6%")
         expect(page.locator("#model-root")).to_contain_text("intfloat/multilingual-e5-small")
+        expect(page.locator("#model-root")).to_contain_text("للقراءة فقط")
         shot(page, "real-model")
     check("real: sources from /sources, model metrics from /model-info", sources_model)
     ctx.close()
