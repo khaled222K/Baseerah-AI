@@ -57,8 +57,11 @@ def llm_call(system, user, backend=None):
     if (backend or BACKEND) == "openai":
         from openai import OpenAI
         client = OpenAI(base_url=os.environ.get("BASEERAH_BASE_URL") or None, api_key=os.environ.get("OPENAI_API_KEY", "local"))
-        r = client.chat.completions.create(model=MODEL, messages=[
-            {"role": "system", "content": system}, {"role": "user", "content": user}])
+        msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        try:  # every Baseerah prompt asks for JSON; JSON mode makes small local models comply
+            r = client.chat.completions.create(model=MODEL, messages=msgs, response_format={"type": "json_object"})
+        except Exception:
+            r = client.chat.completions.create(model=MODEL, messages=msgs)
         return r.choices[0].message.content
     return anthropic_call(system, user)
 
@@ -106,6 +109,14 @@ def parse(raw):
         return None
     return {"relevant": d.get("relevant") is True, "used": [u for u in d.get("used", []) if isinstance(u, str)],
             "explanation": str(d.get("explanation", "")).strip()}
+
+
+# Letters from other scripts (Latin, Cyrillic, CJK, Hangul) in an Arabic explanation mean garbled model output.
+FOREIGN = re.compile(r"[A-Za-z\u0400-\u04FF\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]")
+
+
+def script_ok(text):
+    return not FOREIGN.search(text or "")
 
 
 def flat(t):
@@ -159,7 +170,8 @@ def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
     """mode: retrieval (no LLM) | anthropic | openai. Defaults to BASEERAH_LLM."""
     mode = mode or BACKEND
     from understand import understand
-    u = understand(query, backend="rules" if mode == "retrieval" else mode)
+    # Local models (openai mode) are slow on CPU, so the question rewrite uses the rules unless BASEERAH_UNDERSTAND says otherwise.
+    u = understand(query, backend=os.environ.get("BASEERAH_UNDERSTAND") or ("rules" if mode in ("retrieval", "openai") else mode))
     out = {"status": None, "message": None, "texts": [], "explanation": None, "mode": mode,
            "disclosure": DISCLOSURE, "generated_label": GENERATED_LABEL, "notice": None, "error": None,
            "understanding": u}
@@ -189,7 +201,7 @@ def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
         out.update(status="insufficient", message=MESSAGES["insufficient"])
         return out
     out["texts"] = [e for uid, e in units if uid in used]
-    if quotes_ok(verdict["explanation"], out["texts"]):
+    if quotes_ok(verdict["explanation"], out["texts"]) and script_ok(verdict["explanation"]):
         out["explanation"] = verdict["explanation"]
     else:
         out["notice"] = BAD_QUOTE

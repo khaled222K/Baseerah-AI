@@ -4,7 +4,8 @@ The hadith is read from the database by ID; the client never supplies the text. 
 is shown only if it passes checks against the source: every quotation must be in the text, no numbers or
 hadith collections that the text does not contain, and word glosses only for words that occur in it."""
 import argparse, json, re
-from answer import llm_call, flat, quotes_ok, DISCLOSURE, GENERATED_LABEL
+import os
+from answer import llm_call, flat, quotes_ok, script_ok, DISCLOSURE, GENERATED_LABEL
 from build_hadith_db import strip_al
 from evidence import hadith_evidence, open_db
 
@@ -52,6 +53,8 @@ def grounded(text, source_text):
     src = flat(source_text)
     if any(c in flat(text) and c not in src for c in COLLECTIONS):
         problems.append("collection")
+    if not script_ok(text):
+        problems.append("script")
     return problems
 
 
@@ -98,8 +101,10 @@ def _explain(hadith_id, backend, db_path):
         return {**base, "status": "not_explainable", "message": NOT_EXPLAINABLE, "explanation": None, "words": []}
     problems = grounded(d["explanation"], source)
     text_words = set(norm_words(e["text"]))
-    words = [w for w in d["words"]
-             if all(t in text_words for t in norm_words(w["word"])) and not grounded(w["meaning"], source)]
+    # Word glosses were the least reliable part with small local models, so they are off by default in openai mode.
+    glosses = os.environ.get("BASEERAH_EXPLAIN_WORDS", "0" if backend == "openai" else "1") == "1"
+    words = [w for w in d["words"] if glosses
+             and all(t in text_words for t in norm_words(w["word"])) and not grounded(w["meaning"], source)]
     if problems:
         return {**base, "status": "rejected", "message": REJECTED, "explanation": None, "words": [], "problems": problems}
     return {**base, "status": "explained", "message": None, "explanation": d["explanation"], "words": words}

@@ -27,6 +27,28 @@ Runtime code opens both databases read-only (`mode=ro`, see `db.py`). Only maint
 - `python build_hadith_db.py build|dorar` (re)builds or enriches the `hadith` table. Not needed for normal use, and it changes the DB.
 - `data_build/load_quran.py` and `data_build/load_tafsir.py` rebuild `records` from `Quran.json` / `Tafsir.csv` into `data_build/baseerah.db` (a separate file next to the loaders). The `url` column of the shipped DB was filled in separately and is not produced by these loaders.
 
+## Free AI explanations with a local model (no key)
+
+Install [Ollama](https://ollama.com), then `ollama pull aya-expanse:8b` and use option A in `.env.example`.
+Tested on 3 hadith and one chat question:
+
+| model | explanations (meaning correct) | notes |
+|---|---|---|
+| `qwen2.5:3b` | not usable | garbled words, Chinese glosses, reversed one hadith's meaning |
+| `qwen2.5:7b` | 3/3 | its chat explanation was blocked by the quote check; Apache 2.0 |
+| `aya-expanse:8b` | 3/3 | best Arabic of the three; CC-BY-NC (non-commercial) |
+
+On a 4-core CPU without a GPU, each answer took about 25–55 s.
+
+With a local model (`BASEERAH_LLM=openai`):
+- word glosses are off (`BASEERAH_EXPLAIN_WORDS=1` turns them on), since they were the least reliable part;
+- the question rewrite uses the rules (`BASEERAH_UNDERSTAND` overrides this);
+- replies are requested in JSON mode;
+- any explanation containing Latin or CJK letters is rejected;
+- the site's request timeout is raised to 5 minutes.
+
+These checks catch garbled output, invented quotes, numbers and book names. They cannot catch a fluent sentence that misreads the hadith, which is why the hadith itself is always shown next to the explanation.
+
 ## Using your Anthropic API key
 
 ```bash
