@@ -1,6 +1,6 @@
 """End-to-end UI checks with Playwright (Chromium).
 
-Needs three static servers (see README "Frontend"):
+Needs three static servers (see docs/FRONTEND.md):
   REAL_URL  frontend pointed at a running API        (default http://localhost:5500)
   MOCK_URL  frontend copy with USE_MOCK: true         (default http://localhost:5501)
   DEAD_URL  frontend copy pointed at a closed port    (default http://localhost:5502)
