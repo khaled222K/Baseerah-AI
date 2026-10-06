@@ -1,0 +1,174 @@
+import argparse, json, os, re
+from build_hadith_db import norm
+from evidence import assess, MESSAGES
+from verify import MARKS
+
+MAX_HADITH, MAX_TAFSIR, MAX_AYAH = 3, 2, 2
+BACKEND = os.environ.get("BASEERAH_LLM", "anthropic")
+MODEL = os.environ.get("BASEERAH_MODEL", "claude-sonnet-5-5")
+QUOTE_MIN_WORDS = 1
+QUOTES = re.compile(r"«([^»]+)»|\"([^\"]+)\"|“([^”]+)”|﴿([^﴾]+)﴾")
+NO_MODEL = "تعذّر الاتصال بالنموذج، فتُعرض النصوص المرتبطة بالسؤال بمراجعها دون شرح مولَّد."
+BAD_QUOTE = "حُذف الشرح المولَّد لأنه تضمّن اقتباساً غير موجود في النصوص المعروضة، وتُعرض النصوص كما هي."
+DISCLOSURE = "هذه الإجابة من أداة مدعومة بالذكاء الاصطناعي وليست من مختص شرعي."
+GENERATED_LABEL = "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)"
+
+SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية المتاحة له فقط، ولست مفتياً.
+تُعطى سؤالاً ونصوصاً مرقّمة من قاعدة بيانات موثوقة (أحاديث من الصحيحين، وآيات، وتفسير). النصوص ستُعرض للمستخدم كما هي من القاعدة، فلا تنقلها ولا تعيد كتابتها.
+مهمتك:
+1. قرر هل النصوص المرفقة تجيب عن السؤال مباشرة. إن لم تجب أو كان الارتباط بعيداً أو بمجرد تشابه كلمة، اجعل relevant=false.
+2. اختر معرّفات النصوص التي تدعم الجواب فقط في used، ولا تخترع معرّفات.
+3. اكتب في explanation شرحاً موجزاً (من جملتين إلى أربع) بعربية فصيحة مبسطة يربط النصوص المختارة بالسؤال، دون أن تضيف حكماً أو معلومة غير موجودة فيها. إن كانت المسألة خلافية فأشر إلى ذلك بإيجاز دون أن تقطع بقول.
+4. إن كان السؤال عن حالة شخصية فلا تحكم على الحالة، واذكر أنها تحتاج الرجوع إلى أهل العلم.
+5. لا تذكر اسم راوٍ أو كتاباً أو رقماً غير موجود في النصوص المرفقة.
+6. اشرح ما يدل عليه لفظ النص المرفق فيما يخص السؤال فقط، دون استنتاج أحكام جديدة. إن رُفق توضيح مع حديث فهو المرجع في بيان معناه فانقله بإيجاز.
+أخرج JSON فقط بهذا الشكل دون أي نص خارجه:
+{"relevant": true, "used": ["H1", "T1"], "explanation": "..."}"""
+
+
+def llm_call(system, user):
+    if BACKEND == "openai":
+        from openai import OpenAI
+        client = OpenAI(base_url=os.environ.get("BASEERAH_BASE_URL") or None, api_key=os.environ.get("OPENAI_API_KEY", "local"))
+        r = client.chat.completions.create(model=MODEL, messages=[
+            {"role": "system", "content": system}, {"role": "user", "content": user}])
+        return r.choices[0].message.content
+    import anthropic
+    r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=800, system=system,
+                                              messages=[{"role": "user", "content": user}])
+    return r.content[0].text
+
+
+def pick(evidence):
+    units, counts = [], {"hadith": 0, "tafsir": 0, "ayah": 0}
+    limit = {"hadith": MAX_HADITH, "tafsir": MAX_TAFSIR, "ayah": MAX_AYAH}
+    prefix = {"hadith": "H", "tafsir": "T", "ayah": "A"}
+    for e in evidence:
+        k = e["kind"]
+        if counts[k] >= limit[k]:
+            continue
+        counts[k] += 1
+        units.append((f"{prefix[k]}{counts[k]}", e))
+    return units
+
+
+def build_context(units):
+    parts = []
+    for uid, e in units:
+        if e["kind"] == "hadith":
+            n = e.get("note")
+            if n and n["text"]:
+                note = f"\nتوضيح ({n['source']}): {n['text']}"
+            else:
+                note = ""
+            parts.append(f"[{uid}] حديث | {e['ref']} | الحكم: {e['grade']}\n{e['text']}{note}")
+        elif e["kind"] == "tafsir":
+            ay = f"\nالآية ({e['ayah']['ref']}): {e['ayah']['text']}" if e.get("ayah") else ""
+            parts.append(f"[{uid}] تفسير ({e['source']}) | {e['ref']}{ay}\n{e['text'][:900]}")
+        else:
+            parts.append(f"[{uid}] آية | {e['ref']}\n{e['text']}")
+    return "\n\n".join(parts)
+
+
+def parse(raw):
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        return None
+    try:
+        d = json.loads(m.group(0))
+    except Exception:
+        return None
+    if not isinstance(d, dict):
+        return None
+    return {"relevant": d.get("relevant") is True, "used": [u for u in d.get("used", []) if isinstance(u, str)],
+            "explanation": str(d.get("explanation", "")).strip()}
+
+
+def flat(t):
+    return norm(MARKS.sub("", t or ""))
+
+
+def corpus(texts):
+    parts = []
+    for e in texts:
+        parts.append(flat(e["text"]))
+        if e.get("ayah"):
+            parts.append(flat(e["ayah"]["text"]))
+        if e.get("note") and e["note"]["text"]:
+            parts.append(flat(e["note"]["text"]))
+    return " | ".join(parts)
+
+
+def quotes_ok(explanation, texts):
+    source = corpus(texts)
+    for m in QUOTES.finditer(explanation or ""):
+        q = flat(next(g for g in m.groups() if g))
+        if len(q.split()) >= QUOTE_MIN_WORDS and q not in source:
+            return False
+    return True
+
+
+def records_only(out, units, reason):
+    out["texts"] = [e for _, e in units]
+    out["explanation"] = None
+    out["notice"] = NO_MODEL
+    out["error"] = reason
+    return out
+
+
+def answer(query, db_path="baseerah.db", vec_path="embeddings.db"):
+    a = assess(query, db_path, vec_path)
+    out = {"status": a["status"], "message": a["message"], "texts": [], "explanation": None,
+           "disclosure": DISCLOSURE, "generated_label": GENERATED_LABEL, "notice": None, "error": None}
+    if a["status"] in ("insufficient", "clarify"):
+        return out
+    units = pick(a["evidence"])
+    try:
+        verdict = parse(llm_call(SYSTEM, f"<question>\n{query}\n</question>\n\n<texts>\n{build_context(units)}\n</texts>"))
+    except Exception as ex:
+        return records_only(out, units, str(ex))
+    if not verdict:
+        return records_only(out, units, "رد غير مقروء")
+    valid = {uid for uid, _ in units}
+    used = [u for u in verdict["used"] if u in valid]
+    if not verdict["relevant"] or not used:
+        out.update(status="insufficient", message=MESSAGES["insufficient"])
+        return out
+    out["texts"] = [e for uid, e in units if uid in used]
+    if quotes_ok(verdict["explanation"], out["texts"]):
+        out["explanation"] = verdict["explanation"]
+    else:
+        out["notice"] = BAD_QUOTE
+    return out
+
+
+def render(o):
+    print(f"\nالحالة: {o['status']}\n{o['message']}")
+    if o["texts"]:
+        print("\n=== النصوص الشرعية (من القاعدة كما هي) ===")
+        for e in o["texts"]:
+            if e["kind"] == "hadith":
+                d = f" | الدرر: {e['dorar']['grade']} ({e['dorar']['muhaddith']})" if e["dorar"] else ""
+                print(f"\n[حديث] {e['ref']}\n  {e['text']}\n  الحكم: {e['grade']}{d}\n  الرابط: {e['link']['url']}")
+                if e.get("note") and e["note"]["text"]:
+                    print(f"  التوضيح ({e['note']['source']}): {e['note']['text']}")
+            else:
+                ay = e.get("ayah") or (e if e["kind"] == "ayah" else None)
+                if ay:
+                    print(f"\n[آية] {ay['ref']}\n  {ay['text']}\n  الرابط: {ay['url']}")
+                if e["kind"] == "tafsir":
+                    print(f"\n[تفسير] {e['source']} | {e['ref']}\n  {e['text'][:600]}\n  الرابط: {e['url']}")
+        if o["explanation"]:
+            print(f"\n=== {o['generated_label']} ===\n{o['explanation']}")
+    if o.get("notice"):
+        print(f"\n{o['notice']}")
+    print(f"\n{o['disclosure']}")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("query")
+    ap.add_argument("--db", default="baseerah.db")
+    ap.add_argument("--vec", default="embeddings.db")
+    a = ap.parse_args()
+    render(answer(a.query, a.db, a.vec))
