@@ -41,6 +41,10 @@ def main():
         print(f"#{c['id']} {r['status']} ({r['seconds']}s) {c['query']}\n   texts: {r['texts']}\n   "
               f"message: {r['message']}\n   notice: {r['notice']}\n   explanation: {r['explanation']}\n", flush=True)
     out = ROOT / "benchmark" / f"results-{a.mode}.json"
+    if only and out.exists():  # re-running some cases updates them in the saved results
+        rerun = {r["id"] for r in results}
+        results = sorted([r for r in json.load(open(out, encoding="utf-8"))["results"] if r["id"] not in rerun] + results,
+                         key=lambda r: r["id"])
     json.dump({"mode": a.mode, "model": None if a.mode == "retrieval" else MODEL, "results": results},
               open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"saved {out}")

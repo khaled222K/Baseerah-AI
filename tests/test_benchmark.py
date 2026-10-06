@@ -85,3 +85,18 @@ def test_unreachable_model_falls_back_to_texts_quickly(monkeypatch):
     o = answer("ما حق الجار في الإسلام؟", mode="openai")
     assert o["texts"] and o["explanation"] is None and NO_MODEL in o["notice"] and o["error"]
     assert time.time() - t0 < 60
+
+
+def test_personal_case_never_gets_a_generated_ruling(monkeypatch):
+    """Case 5: in LLM mode the referral shows texts only; the model is not even called."""
+    import answer as A
+    monkeypatch.setattr(A, "llm_call", lambda *a, **k: (_ for _ in ()).throw(AssertionError("LLM called")))
+    o = A.answer(CASES[5], mode="openai")
+    assert o["status"] == "referral" and o["explanation"] is None and o["texts"]
+
+
+def test_asterisk_quotes_are_checked():
+    from answer import quotes_ok
+    src = [{"text": "وَجَعَلَهَا كَلِمَةَۢ بَاقِيَةࣰ فِي عَقِبِهِۦ لَعَلَّهُمۡ يَرۡجِعُونَ"}]
+    assert quotes_ok("كما قال *وجعلها كلمة باقية في عقبه*", src)
+    assert not quotes_ok("كما قال *كلمة غير موجودة*", src)

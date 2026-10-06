@@ -9,7 +9,7 @@ MAX_HADITH, MAX_TAFSIR, MAX_AYAH = 3, 2, 2
 BACKEND = os.environ.get("BASEERAH_LLM", "anthropic")
 MODEL = os.environ.get("BASEERAH_MODEL", "claude-sonnet-5-5")
 QUOTE_MIN_WORDS = 1
-QUOTES = re.compile(r"«([^»]+)»|\"([^\"]+)\"|“([^”]+)”|﴿([^﴾]+)﴾")
+QUOTES = re.compile(r"«([^»]+)»|\"([^\"]+)\"|“([^”]+)”|﴿([^﴾]+)﴾|\*([^*\n]+)\*")
 NO_MODEL = "تعذّر الاتصال بالنموذج، فتُعرض النصوص المرتبطة بالسؤال بمراجعها دون شرح مولَّد."
 BAD_QUOTE = "حُذف الشرح المولَّد لأنه تضمّن اقتباساً غير موجود في النصوص المعروضة، وتُعرض النصوص كما هي."
 DISCLOSURE = "هذه الإجابة من أداة مدعومة بالذكاء الاصطناعي وليست من مختص شرعي."
@@ -222,9 +222,11 @@ def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
     if a["status"] in ("insufficient", "clarify") or not a["evidence"]:
         return out
     units = pick(a["evidence"])
-    if mode == "retrieval":
+    # A personal case gets the texts and the referral only: a generated explanation next to it reads as a ruling
+    # on the person's own situation (seen with a local 8B model in docs/BENCHMARK.md, case 5).
+    if mode == "retrieval" or a["status"] == "referral":
         out["texts"] = [e for _, e in units]
-        out["notice"] = " ".join([*notes, RETRIEVAL_ONLY])
+        out["notice"] = " ".join([*notes, RETRIEVAL_ONLY]) if mode == "retrieval" else " ".join(notes) or None
         return out
     try:
         verdict = parse(llm_call(SYSTEM, f"<question>\n{query}\n</question>\n\n<texts>\n{build_context(units)}\n</texts>",
