@@ -111,6 +111,13 @@ def run(browser):
         expect(page.locator("dialog.dialog")).to_have_count(0)
     check("real: source dialog shows full stored text, Esc closes", source_dialog)
 
+    def explain_without_llm():
+        page.locator(".source-card .btn-explain").first.click()
+        expect(page.locator("dialog .explain-result")).to_contain_text("غير مفعّل", timeout=30000)
+        expect(page.locator("dialog blockquote")).not_to_be_empty()
+        page.keyboard.press("Escape")
+    check("real: hadith explain button; retrieval mode says explanation is not enabled", explain_without_llm)
+
     def copy_save():
         page.get_by_role("button", name="نسخ الإجابة").click()
         expect(page.locator(".toast")).to_contain_text("تم نسخ الإجابة")
@@ -234,6 +241,17 @@ def run(browser):
         page.goto(f"{MOCK}/model.html")
         expect(page.locator("#model-root")).to_contain_text("لم تُنشر نتيجة قياس نهائية بعد.", timeout=10000)
     check("mock: verify partial / not / insufficient / error / matched; model page without metrics", mock_verify)
+
+    def mock_explain():
+        page.goto(f"{MOCK}/index.html?new=1")
+        ask(page, "سؤال للشرح")
+        page.wait_for_selector(".answer-actions", timeout=20000)
+        page.locator(".source-card .btn-explain").first.click()
+        expect(page.locator("dialog .explain-generated")).to_contain_text("شرح مولَّد بالذكاء الاصطناعي", timeout=10000)
+        expect(page.locator("dialog .explain-generated dl")).to_contain_text("[معنى تجريبي]")
+        expect(page.locator("dialog .notice")).to_contain_text(AI_NOTICE)
+        page.keyboard.press("Escape")
+    check("mock: explain dialog shows labeled generated text, word meanings, AI notice", mock_explain)
     ctx.close()
 
     # ---- backend down

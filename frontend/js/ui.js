@@ -1,7 +1,7 @@
 // Shared shell (sidebar, top bar, footer), components and safe rendering helpers.
 // Dynamic content is always inserted with textContent / DOM nodes, never as HTML.
 import { icon } from "./icons.js";
-import { config } from "./api.js";
+import { config, explain } from "./api.js";
 import { listConversations, listSaved } from "./storage.js";
 
 export const SLOGAN = "إجابةٌ تستند إلى أصل.";
@@ -36,7 +36,7 @@ export function el(tag, attrs = {}, ...children) {
     else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
     else node.setAttribute(k, v === true ? "" : v);
   }
-  for (const c of children.flat()) {
+  for (const c of children.flat(Infinity)) {
     if (c == null || c === false) continue;
     node.append(c instanceof Node ? c : document.createTextNode(String(c)));
   }
@@ -297,7 +297,55 @@ export function sourceCard(s) {
     s.text ? el("p", { class: "source-excerpt" }, el("span", { class: "sr-only", text: "مقتطف: " }), excerpt(s.text)) : null,
     el("div", { class: "source-actions" },
       el("button", { class: "btn", type: "button", onclick: () => openSources([s], s.name) }, icon("file", "icon-sm"), "عرض المصدر"),
-      externalLink(s.url)));
+      externalLink(s.url)),
+    explainButton(s));
+}
+
+// ---------- Hadith explanation (generated, grounded in the stored text) ----------
+export function explainButton(s, cls = "btn btn-ghost btn-explain") {
+  if (s.type !== "hadith" || !/^hadith-\d+$/.test(s.id)) return null;
+  return el("button", { class: cls, type: "button", onclick: () => openExplain(s) }, icon("sparkle", "icon-sm"), "اشرح الحديث");
+}
+
+export async function openExplain(s) {
+  const result = el("div", { class: "explain-result", "aria-live": "polite" });
+  const body = el("div", { class: "explain" },
+    el("p", { class: "source-ref", text: s.reference }),
+    el("blockquote", { class: "source-full", text: s.text }),
+    result);
+  dialog(`شرح الحديث — ${s.name}`, body);
+  const load = async () => {
+    const wait = loader("جارٍ إعداد الشرح...");
+    result.replaceChildren(wait);
+    const r = await explain(s.id);
+    result.replaceChildren();
+    if (r.storedNote) {
+      result.append(el("section", { class: "explain-note" },
+        el("h3", {}, icon("book"), `توضيح مخزن (${r.storedNote.source})`),
+        el("div", { class: "source-full", text: r.storedNote.text })));
+    }
+    if (r.status === "explained") {
+      result.append(el("section", { class: "answer-card explain-generated" },
+        el("div", { class: "answer-label" }, icon("sparkle"), r.label || "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)"),
+        el("div", { class: "answer-text" }, richText(r.explanation)),
+        r.words.length ? el("div", {}, el("h4", { text: "معاني الكلمات" }),
+          el("dl", { class: "kv" }, r.words.map((w) => [el("dt", { text: w.word }), el("dd", { text: w.meaning })]))) : null,
+        r.groundedOn.length ? el("p", { class: "source-ref", text: `يستند هذا الشرح إلى: ${r.groundedOn.join("، ")} فقط.` }) : null));
+      result.append(el("div", { class: "notice" }, icon("info"), el("span", { text: AI_NOTICE })));
+      if (r.disclosure) result.append(el("p", { class: "disclosure", text: r.disclosure }));
+      return;
+    }
+    let text = r.message;
+    if (r.status === "error") {
+      text = r.errorKind === "unavailable" ? MSG.unavailable : r.errorKind === "invalid" ? MSG.invalid : (r.message || MSG.server);
+    }
+    result.append(el("div", { class: `answer-status${r.status === "error" ? " is-error" : " is-insufficient"}`, role: r.status === "error" ? "alert" : null },
+      icon(r.status === "error" ? "alert" : "info"), el("p", { class: "answer-message", text: text || MSG.server })));
+    if (r.status === "error") {
+      result.append(el("button", { class: "btn", type: "button", style: "margin-top:10px", onclick: load }, icon("refresh", "icon-sm"), "إعادة المحاولة"));
+    }
+  };
+  load();
 }
 
 export function sourceDetail(s) {

@@ -1,7 +1,7 @@
 // Verify evidence: compares submitted wording with stored texts (backend /verify).
 import { verify } from "./api.js";
 import { icon } from "./icons.js";
-import { initShell, el, loader, toast, copyText, externalLink, sourceDetail, stateBlock, MSG } from "./ui.js";
+import { initShell, el, loader, toast, copyText, externalLink, sourceDetail, explainButton, MSG } from "./ui.js";
 
 initShell("verify");
 const MAX = 500;
@@ -72,6 +72,7 @@ function render(r) {
       externalLink(s.url, "فتح المصدر الأصلي", "btn btn-primary"),
       el("button", { class: "btn", type: "button", onclick: async () => toast((await copyText(`${s.text}\n${s.name} — ${s.reference}`)) ? "تم نسخ النص" : "تعذر النسخ") },
         icon("copy", "icon-sm"), "نسخ النص"),
+      explainButton(s, "btn"),
       toggle), details);
   }
   if (r.status === "error") {

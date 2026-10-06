@@ -146,6 +146,22 @@ export function normalizeModelInfo(raw) {
   };
 }
 
+export function normalizeExplain(raw) {
+  const ok = ["explained", "unavailable", "rejected", "not_explainable", "error"];
+  return {
+    status: ok.includes(raw?.status) ? raw.status : "error",
+    message: strOrNull(raw?.message),
+    explanation: strOrNull(raw?.explanation),
+    words: Array.isArray(raw?.words) ? raw.words.filter((w) => w && w.word && w.meaning).map((w) => ({ word: str(w.word), meaning: str(w.meaning) })) : [],
+    reference: strOrNull(raw?.reference),
+    text: strOrNull(raw?.text),
+    storedNote: raw?.stored_note && raw.stored_note.text ? { text: str(raw.stored_note.text), source: str(raw.stored_note.source) } : null,
+    groundedOn: Array.isArray(raw?.grounded_on) ? raw.grounded_on.map(str) : [],
+    label: strOrNull(raw?.label),
+    disclosure: strOrNull(raw?.disclosure),
+  };
+}
+
 // ---------- Public API ----------
 const fail = (e) => ({ status: "error", errorKind: e instanceof ApiError ? e.kind : "server" });
 
@@ -164,6 +180,15 @@ export async function verify(text) {
     return normalizeVerify(raw);
   } catch (e) {
     return { ...normalizeVerify({ status: "error" }), ...fail(e) };
+  }
+}
+
+export async function explain(sourceId) {
+  try {
+    const raw = config.useMock ? await mock.explain(sourceId) : await request("/explain", { method: "POST", body: { source_id: sourceId } });
+    return normalizeExplain(raw);
+  } catch (e) {
+    return { ...normalizeExplain({ status: "error" }), ...fail(e) };
   }
 }
 

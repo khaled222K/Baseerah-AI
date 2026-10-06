@@ -15,7 +15,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 function placeholderSource(i, extra = {}) {
   const types = ["hadith", "ayah", "tafsir"];
   return {
-    id: `mock-${i}`,
+    id: `${types[i % 3]}-${i + 1}`,
     type: types[i % 3],
     name: `مصدر تجريبي ${i + 1}`,
     reference: `مرجع تجريبي رقم ${i + 1}`,
@@ -66,6 +66,18 @@ export async function verify(text) {
     coverage: partial ? 0.75 : 1, matched_words: partial ? 6 : 8, total_words: 8,
     method: "[طريقة تجريبية]",
     sources: [placeholderSource(0, { numbering_note: "[ملاحظة تجريبية حول الترقيم]" })],
+  };
+}
+
+export async function explain(sourceId) {
+  await wait(900);
+  return {
+    status: "explained", message: null,
+    explanation: `${PH} هذا شرح تجريبي لاختبار عرض الشرح في الواجهة فقط، وفيه «اقتباس تجريبي».`,
+    words: [{ word: "[كلمة]", meaning: "[معنى تجريبي]" }],
+    reference: "مرجع تجريبي", text: `${PH} نص الحديث كما يُعرض من القاعدة.`, stored_note: null,
+    grounded_on: ["نص الحديث المعروض"], label: "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)",
+    disclosure: "[وضع تجريبي] بيانات بديلة لاختبار الواجهة فقط.",
   };
 }
 

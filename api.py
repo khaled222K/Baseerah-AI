@@ -130,6 +130,23 @@ def verify(body: VerifyIn):
             "sources": [source_of(r["match"])] if r.get("match") else []}
 
 
+class ExplainIn(BaseModel):
+    source_id: str = Field(pattern=r"^hadith-\d{1,6}$")
+
+
+@app.post("/explain")
+def explain_hadith(body: ExplainIn):
+    """Generated explanation of one stored hadith (requires BASEERAH_LLM=anthropic|openai)."""
+    from explain import explain
+    r = explain(int(body.source_id.split("-")[1]), default_mode(), DB)
+    if r["status"] == "not_found":
+        return JSONResponse({"status": "error", "message": "الحديث غير موجود."}, status_code=404)
+    if r.get("error"):
+        log.warning("explain %s failed: %s", body.source_id, r["error"])
+    return {k: v for k, v in r.items() if k not in ("error", "problems")} | (
+        {"checks_failed": r["problems"]} if r.get("problems") else {})
+
+
 @app.get("/sources")
 def sources():
     from db import connect_ro

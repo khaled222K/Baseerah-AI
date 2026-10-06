@@ -27,6 +27,17 @@ Runtime code opens both databases read-only (`mode=ro`, see `db.py`). Only maint
 - `python build_hadith_db.py build|dorar` (re)builds or enriches the `hadith` table. Not needed for normal use, and it changes the DB.
 - `data_build/load_quran.py` and `data_build/load_tafsir.py` rebuild `records` from `Quran.json` / `Tafsir.csv` into `data_build/baseerah.db` (a separate file next to the loaders). The `url` column of the shipped DB was filled in separately and is not produced by these loaders.
 
+## Using your Anthropic API key
+
+```bash
+cp .env.example .env      # then open .env and paste your key after ANTHROPIC_API_KEY=
+```
+`.env` stays on your computer: it is git-ignored and loaded automatically by `ask.py` and `api.py`. Never commit it or paste the key into code. With `BASEERAH_LLM=anthropic` in `.env`:
+- answers get a short explanation;
+- hadith get the **«اشرح الحديث»** button: an explanation of one hadith, grounded only in its stored text (and its stored note, if any). It is shown only if every quotation is in the text, it adds no numbers or other hadith collections, and word glosses are for words that occur in the hadith.
+
+The default model is `claude-sonnet-5-5`; set `BASEERAH_MODEL=claude-opus-5-5` for a stronger, more expensive one. Requests on these models enable Anthropic's server-side refusal fallback (`BASEERAH_FALLBACKS=0` turns it off).
+
 ## Usage
 
 ```bash
