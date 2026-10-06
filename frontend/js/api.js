@@ -130,6 +130,27 @@ export function normalizeSources(raw) {
   };
 }
 
+const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : null);
+const bool = (x) => (typeof x === "boolean" ? x : null);
+
+function normalizeRuntime(rt) {
+  if (!rt || typeof rt !== "object") return null;
+  const d = rt.details && typeof rt.details === "object" ? rt.details : null;
+  return {
+    location: ["local", "remote"].includes(rt.location) ? rt.location : null,
+    host: strOrNull(rt.host),
+    understanding: strOrNull(rt.understanding),
+    explainGlosses: bool(rt.explain_glosses),
+    timeoutMs: num(rt.timeout_ms),
+    jsonMode: bool(rt.json_mode),
+    maxTokens: num(rt.max_tokens),
+    serverFallback: bool(rt.server_fallback),
+    fallback: strOrNull(rt.fallback),
+    details: d ? { server: strOrNull(d.server), family: strOrNull(d.family), parameterSize: strOrNull(d.parameter_size),
+                   quantization: strOrNull(d.quantization), contextLength: num(d.context_length) } : null,
+  };
+}
+
 export function normalizeModelInfo(raw) {
   const r = raw?.retrieval || {};
   const a = raw?.abstention || {};
@@ -138,8 +159,12 @@ export function normalizeModelInfo(raw) {
     modelName: strOrNull(raw?.model_name),
     provider: strOrNull(raw?.provider),
     modelVersion: strOrNull(raw?.model_version),
+    runtime: normalizeRuntime(raw?.runtime),
     retrieval: { embeddingModel: strOrNull(r.embedding_model), reranker: strOrNull(r.reranker),
-                 lexical: strOrNull(r.lexical), fusion: strOrNull(r.fusion) },
+                 lexical: strOrNull(r.lexical), fusion: strOrNull(r.fusion),
+                 candidates: num(r.candidates), rerankPool: num(r.rerank_pool), rerankRewrites: num(r.rerank_rewrites),
+                 hfOffline: typeof r.hf_offline === "boolean" ? r.hf_offline : null,
+                 readOnly: typeof r.databases_read_only === "boolean" ? r.databases_read_only : null },
     abstention: { minSimilarity: a.min_similarity ?? null, highSimilarity: a.high_similarity ?? null,
                   minRerankScore: a.min_rerank_score ?? null },
     evaluation: raw?.evaluation && typeof raw.evaluation === "object" ? raw.evaluation : null,

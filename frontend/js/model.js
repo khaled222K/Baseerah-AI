@@ -19,6 +19,26 @@ function kv(pairs) {
   return dl;
 }
 
+const fmt = (x) => (x === null || x === undefined ? null : String(x));
+const yesNo = (b) => (b === null || b === undefined ? null : b ? "نعم" : "لا");
+const UNDERSTANDING = { rules: "قواعد ثابتة (دون نموذج)", anthropic: "النموذج اللغوي", openai: "النموذج اللغوي" };
+
+function runtimeCard(m) {
+  const rt = m.runtime;
+  if (m.mode === "retrieval" || !rt) return null;
+  const d = rt.details;
+  const where = rt.location === "local" ? "محليًا على الخادم نفسه (دون إنترنت)" : rt.location === "remote" ? "خدمة خارجية عبر الإنترنت" : null;
+  return card("تشغيل النموذج", "cpu", kv([
+    ["مكان التشغيل", where], ["الخادم", d?.server ? `${d.server} (${rt.host})` : rt.host],
+    ["حجم النموذج", d?.parameterSize ? `${d.parameterSize} معامل` : null], ["التكميم", d?.quantization],
+    ["طول السياق", d?.contextLength ? `${d.contextLength} رمز` : null],
+    ["فهم السؤال وإعادة صياغته", UNDERSTANDING[rt.understanding] || rt.understanding],
+    ["مخرجات بصيغة JSON", yesNo(rt.jsonMode)], ["الحد الأقصى للمخرجات", rt.maxTokens ? `${rt.maxTokens} رمز` : null],
+    ["شرح الكلمات الغريبة", yesNo(rt.explainGlosses)],
+    ["مهلة الطلب", rt.timeoutMs ? `${Math.round(rt.timeoutMs / 1000)} ثانية` : null]].filter(([, v]) => v)),
+    rt.fallback ? el("p", { class: "source-ref", text: `عند الفشل: ${rt.fallback}` }) : null);
+}
+
 function evaluation(ev) {
   if (!ev) return el("p", { class: "placeholder", text: "لم تُنشر نتيجة قياس نهائية بعد." });
   const wrap = el("div");
@@ -63,6 +83,7 @@ async function load() {
       card("النموذج المستخدم", "cpu",
         retrievalOnly ? el("p", { text: "يعمل الخادم حاليًا في وضع الاسترجاع فقط: لا يُستخدم نموذج لغوي لصياغة الشرح، وتُعرض النصوص من المصادر مباشرة." }) : null,
         kv([["اسم النموذج", m.modelName], ["المزوّد", m.provider], ["الإصدار", m.modelVersion]])),
+      runtimeCard(m),
       card("وظيفة الذكاء الاصطناعي", "sparkle",
         el("p", { text: "يُستخدم الذكاء الاصطناعي لفهم السؤال والبحث بالمعنى وترتيب النصوص الأقرب، ولصياغة شرح موجز عند تفعيل النموذج اللغوي. أما النصوص الشرعية نفسها فتأتي من قاعدة المصادر." })),
       card("ما الذي يفعله؟", "checkCircle", el("ul", {},
@@ -79,7 +100,11 @@ async function load() {
         el("li", { text: "لا يغطي إلا المصادر الموجودة في القاعدة." }))),
       card("آلية الاسترجاع", "search", kv([
         ["نموذج التمثيل الدلالي", m.retrieval.embeddingModel], ["البحث بالكلمات", m.retrieval.lexical],
-        ["دمج النتائج", m.retrieval.fusion], ["إعادة الترتيب", m.retrieval.reranker]])),
+        ["دمج النتائج", m.retrieval.fusion], ["إعادة الترتيب", m.retrieval.reranker],
+        ["عدد المرشحين", fmt(m.retrieval.candidates)],
+        ["يُعاد ترتيب", m.retrieval.rerankPool != null ? `أعلى ${m.retrieval.rerankPool} نتيجة` : null],
+        ["الاتصال بـ Hugging Face أثناء التشغيل", yesNo(m.retrieval.hfOffline === null ? null : !m.retrieval.hfOffline)],
+        ["قواعد البيانات", m.retrieval.readOnly ? "للقراءة فقط" : null]])),
       card("آلية الامتناع", "shield",
         el("p", { text: "لا يُعرض نص إلا إذا تجاوز حدود التشابه وإعادة الترتيب، وإلا تعتذر بصيرة عن الإجابة بدل تقديم حكم غير موثق." }),
         kv([["أدنى تشابه (مع تطابق لفظي)", m.abstention.minSimilarity?.toString()], ["تشابه مرتفع", m.abstention.highSimilarity?.toString()],

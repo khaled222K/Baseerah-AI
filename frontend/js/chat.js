@@ -7,8 +7,15 @@ import {
   setActiveNav, setCurrentConversation, sourceToText, formatTime, AI_NOTICE, MSG,
 } from "./ui.js";
 
-// Neutral example questions (editable). Only questions — no answers or claims are hardcoded.
-const SUGGESTIONS = ["ما حق الجار في الإسلام؟", "ما فضل الصدق في السنة النبوية؟", "ما آداب الأكل في السنة النبوية؟"];
+// Example questions on women's rights and common misconceptions (editable). Only questions: no answers or
+// rulings are hardcoded, and the wording does not presuppose a contested ruling.
+const SUGGESTIONS = [
+  "هل يجوز إجبار المرأة على النقاب؟",
+  "ما الحكم الشرعي في استقلال المرأة بمالها الخاص؟",
+  "ما هي الضوابط الشرعية لخروج المرأة للعمل؟",
+  "ما معنى قوامة الرجل في الإسلام وضوابطها؟",
+  "ما الفرق بين طاعة الزوج بالمعروف والمساس بحقوق المرأة الشرعية؟",
+];
 const MAX_LEN = 1000;
 const STAGE_MS = 2500;
 

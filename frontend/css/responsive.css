@@ -31,7 +31,7 @@
   /* Suggestions become a swipeable row so the composer stays near the top of the fold */
   .suggestion-list { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 78%; overflow-x: auto;
     scroll-snap-type: x mandatory; padding-bottom: 6px; }
-  .suggestion-list li { scroll-snap-align: start; }
+  .suggestion-list li, .suggestion-list li:nth-child(n+4) { grid-column: auto; scroll-snap-align: start; }
   .thread { padding: 18px 14px 8px; gap: 20px; }
   .chat-composer-wrap { padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); }
   .composer { border-radius: var(--r-lg); padding: 6px 6px 6px 8px; }

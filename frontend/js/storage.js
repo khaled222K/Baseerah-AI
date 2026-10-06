@@ -30,8 +30,23 @@ export const uid = () =>
   (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
 
 // ---------- Conversations: [{id, title, createdAt, updatedAt, turns:[{id, question, response, at}]}], newest first
+// A conversation that holds only one question is "the same thread" as a newer one-question conversation
+// with the same question (e.g. a suggestion clicked twice): only the newest is kept.
+const soloKey = (c) => (c.turns?.length === 1 ? c.turns[0].question.trim() : null);
+
+function dedupe(list) {
+  const seen = new Set();
+  return list.filter((c) => {
+    const k = soloKey(c);
+    if (k === null) return true;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 export function listConversations() {
-  return read(KEYS.conversations).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  return dedupe(read(KEYS.conversations).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
 }
 
 export function getConversation(id) {
@@ -49,7 +64,9 @@ export function saveTurn(conversationId, turn) {
   if (i >= 0) conv.turns[i] = turn;
   else conv.turns.push(turn);
   conv.updatedAt = Date.now();
-  write(KEYS.conversations, all.slice(0, MAX_CONVERSATIONS));
+  // Asking the same single question again replaces the older copy instead of adding a duplicate thread.
+  const kept = all.filter((c) => c === conv || soloKey(c) === null || soloKey(c) !== soloKey(conv));
+  write(KEYS.conversations, kept.slice(0, MAX_CONVERSATIONS));
   window.dispatchEvent(new CustomEvent("baseerah:storage"));
 }
 
