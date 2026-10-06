@@ -10,6 +10,8 @@ TAFSIR_NAME = "التفسير الميسر (مجمع الملك فهد)"
 T_LEX = 0.80
 T_HIGH = 0.92
 SEARCH = os.environ.get("BASEERAH_SEARCH", "hybrid")  # hybrid | legacy (semantic.semantic_search)
+RERANK = os.environ.get("BASEERAH_RERANK", "1") == "1"  # cross-encoder on by default: measured in evaluate.py
+T_RERANK = -2.5  # min cross-encoder score when reranking; picked on calib_set.json (not eval_set.json)
 PERSONAL = [
     "انا", "عندي", "حصل لي", "صار لي", "صارلي", "زوجي", "زوجتي", "حالتي", "وضعي", "هل يجوز لي",
     "هل يصح لي", "هل علي", "صلاتي", "صيامي", "حجي", "عمرتي", "ماذا افعل", "وش اسوي", "ايش اسوي",
@@ -42,8 +44,12 @@ def coverage(query, text):
     return round(sum(t in words for t in terms) / len(terms), 2)
 
 
+def reranked_ok(item):
+    return item.get("rerank") is None or item["rerank"] >= T_RERANK
+
+
 def accepted(item):
-    return item["similarity"] >= T_HIGH or (item["lex"] and item["similarity"] >= T_LEX)
+    return reranked_ok(item) and (item["similarity"] >= T_HIGH or (item["lex"] and item["similarity"] >= T_LEX))
 
 
 def hadith_evidence(db, hid, query, similarity, lex):
@@ -58,11 +64,11 @@ def hadith_evidence(db, hid, query, similarity, lex):
             "similarity": similarity, "lex": lex, "coverage": coverage(query, row["matn_display"])}
 
 
-def search(query, db_path, vec_path, k, how=None, rewrites=(), rerank=False):
+def search(query, db_path, vec_path, k, how=None, rewrites=(), rerank=None):
     if (how or SEARCH) == "legacy":
         return semantic_search(db_path, vec_path, query, k)
     from retrieve import hybrid_search
-    return hybrid_search(db_path, vec_path, query, k, rewrites=rewrites, rerank=rerank)
+    return hybrid_search(db_path, vec_path, query, k, rewrites=rewrites, rerank=RERANK if rerank is None else rerank)
 
 
 def open_db(db_path):
@@ -71,7 +77,7 @@ def open_db(db_path):
     return db
 
 
-def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=False):
+def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=None):
     if len(norm(query).split()) < 2:
         return {"status": "clarify", "message": MESSAGES["clarify"], "evidence": [], "raw": []}
     res = search(query, db_path, vec_path, k, how, rewrites, rerank)
@@ -85,12 +91,14 @@ def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=F
         f = r["fields"]
         if r["type"] == "tafsir" and accepted(r):
             ay = ayah_of(db, f["surah_no"], f["ayah_no"])
-            evidence.append({"kind": "tafsir", "ref": f["reference"], "text": f["text_original"], "url": f["url"],
+            evidence.append({"kind": "tafsir", "unit": f"ayah:{int(f['surah_no'])}:{int(f['ayah_no'])}",
+                             "ref": f["reference"], "text": f["text_original"], "url": f["url"],
                              "source": TAFSIR_NAME, "similarity": r["similarity"], "lex": r["lex"],
                              "coverage": coverage(query, f["text_search"]), "ayah": ay})
-        elif r["type"] == "ayah" and r["lex"] and r["similarity"] >= T_LEX and ("ayah", f["reference"]) not in seen:
+        elif r["type"] == "ayah" and r["lex"] and r["similarity"] >= T_LEX and reranked_ok(r) and ("ayah", f["reference"]) not in seen:
             seen.add(("ayah", f["reference"]))
-            evidence.append({"kind": "ayah", "ref": f["reference"], "text": f["text_original"], "url": f["url"],
+            evidence.append({"kind": "ayah", "unit": f"ayah:{int(f['surah_no'])}:{int(f['ayah_no'])}",
+                             "ref": f["reference"], "text": f["text_original"], "url": f["url"],
                              "source": "القرآن الكريم (مجمع الملك فهد)", "similarity": r["similarity"], "lex": True,
                              "coverage": coverage(query, f["text_search"])})
     if not evidence:

@@ -1,0 +1,109 @@
+{
+ "description": "Gate calibration set (separate from eval_set.json): evidence.EVAL + new out-of-scope questions. Used only to pick T_RERANK.",
+ "items": [
+  {
+   "q": "حكم الحائض والصلاة",
+   "want": "answer"
+  },
+  {
+   "q": "هل يجوز للحائض قراءة القرآن",
+   "want": "answer"
+  },
+  {
+   "q": "حكم سفر المرأة بدون محرم",
+   "want": "answer"
+  },
+  {
+   "q": "حقوق الزوجة على زوجها",
+   "want": "answer"
+  },
+  {
+   "q": "عدة المطلقة",
+   "want": "answer"
+  },
+  {
+   "q": "ما هو الخلع",
+   "want": "answer"
+  },
+  {
+   "q": "الدورة الشهرية هل تمنع الصيام",
+   "want": "answer"
+  },
+  {
+   "q": "حكم لبس الحجاب",
+   "want": "answer"
+  },
+  {
+   "q": "ما هي عاصمة فرنسا",
+   "want": "insufficient"
+  },
+  {
+   "q": "كيف اطبخ الكبسة",
+   "want": "insufficient"
+  },
+  {
+   "q": "سعر الذهب اليوم",
+   "want": "insufficient"
+  },
+  {
+   "q": "حكم الزكاة في الاسهم",
+   "want": "insufficient"
+  },
+  {
+   "q": "انا حائض ونزل مني دم بعد الطهر هل صلاتي صحيحة",
+   "want": "referral"
+  },
+  {
+   "q": "زوجي طلقني وانا حامل هل تلزمني العدة",
+   "want": "referral"
+  },
+  {
+   "q": "كم سعر البنزين في السعودية",
+   "want": "insufficient"
+  },
+  {
+   "q": "وش أحسن مطعم برجر في جدة",
+   "want": "insufficient"
+  },
+  {
+   "q": "كيف أسوي حساب انستقرام",
+   "want": "insufficient"
+  },
+  {
+   "q": "متى يبدأ الدوري الانجليزي",
+   "want": "insufficient"
+  },
+  {
+   "q": "اشرح لي نظرية النسبية",
+   "want": "insufficient"
+  },
+  {
+   "q": "كيف أتعلم البرمجة بلغة بايثون",
+   "want": "insufficient"
+  },
+  {
+   "q": "وش أفضل سيارة عائلية",
+   "want": "insufficient"
+  },
+  {
+   "q": "ترجم لي كلمة شجرة للانجليزي",
+   "want": "insufficient"
+  },
+  {
+   "q": "كيف أنزل وزني بسرعة",
+   "want": "insufficient"
+  },
+  {
+   "q": "من هو مخترع الكهرباء",
+   "want": "insufficient"
+  },
+  {
+   "q": "ما هي أكبر دولة في العالم",
+   "want": "insufficient"
+  },
+  {
+   "q": "كيف أكتب سيرة ذاتية",
+   "want": "insufficient"
+  }
+ ]
+}
