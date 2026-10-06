@@ -73,3 +73,16 @@ def test_stored_note_is_passed_and_returned(monkeypatch):
     calls = stub(monkeypatch, {"ok": True, "explanation": "شرح موجز.", "words": []})
     r = explain.explain(301, "anthropic")          # hadith 301 has a stored note in hadith_notes
     assert r["stored_note"]["text"] and r["stored_note"]["text"] in calls[0]
+
+
+def test_garbled_script_is_rejected(monkeypatch):
+    stub(monkeypatch, {"ok": True, "explanation": "القوة في ضبط النفس، والعبatchا هنا معناها.", "words": []})
+    assert "script" in explain.explain(HID, "anthropic")["problems"]
+
+
+def test_word_glosses_off_by_default_for_local_models(monkeypatch):
+    monkeypatch.delenv("BASEERAH_EXPLAIN_WORDS", raising=False)
+    stub(monkeypatch, {"ok": True, "explanation": "شرح موجز.", "words": [{"word": "الصرعة", "meaning": "معنى"}]})
+    assert explain.explain(HID, "openai")["words"] == []
+    explain._CACHE.clear()
+    assert explain.explain(HID, "anthropic")["words"]

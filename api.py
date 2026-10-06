@@ -211,7 +211,8 @@ if os.environ.get("BASEERAH_SERVE_FRONTEND") == "1":
     def frontend_config():
         """When this API serves the site, the site calls back to the same origin, whatever host name the
         browser used (localhost, 127.0.0.1, a domain), so no CORS setup is needed."""
-        cfg = {"API_BASE_URL": "", "USE_MOCK": False, "REQUEST_TIMEOUT_MS": int(os.environ.get("BASEERAH_TIMEOUT_MS", "90000")),
+        cfg = {"API_BASE_URL": "", "USE_MOCK": False, "REQUEST_TIMEOUT_MS": int(os.environ.get(
+            "BASEERAH_TIMEOUT_MS", "300000" if default_mode() == "openai" else "90000")),
                "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "")}
         return Response(f"window.BASEERAH_CONFIG = {json.dumps(cfg, ensure_ascii=False)};\n",
                         media_type="application/javascript", headers={"Cache-Control": "no-store"})
