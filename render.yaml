@@ -1,0 +1,55 @@
+# Render Blueprint: one FastAPI web service (retrieval + API) and one static site (frontend/).
+# After the first deploy, set API_BASE_URL on the static site and BASEERAH_CORS_ORIGINS on the API
+# to each other's onrender.com URLs, then redeploy both.
+services:
+  - type: web
+    name: baseerah-api
+    runtime: python
+    plan: standard            # needs ~1 GB+ RAM (two transformer models + 27k vectors); see README
+    buildCommand: >-
+      pip install torch --index-url https://download.pytorch.org/whl/cpu &&
+      pip install -r requirements.txt &&
+      python scripts/fetch_models.py
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: HF_HOME
+        value: /opt/render/project/src/.hf_cache
+      - key: HF_HUB_OFFLINE
+        value: "1"
+      - key: TRANSFORMERS_OFFLINE
+        value: "1"
+      - key: BASEERAH_LLM          # retrieval | anthropic | openai
+        value: retrieval
+      - key: BASEERAH_CORS_ORIGINS # comma-separated, e.g. https://baseerah-web.onrender.com
+        sync: false
+      - key: ANTHROPIC_API_KEY     # only for BASEERAH_LLM=anthropic
+        sync: false
+      - key: BASEERAH_MODEL        # model id for the chosen LLM backend
+        sync: false
+      - key: BASEERAH_BASE_URL     # only for BASEERAH_LLM=openai (OpenAI-compatible server URL)
+        sync: false
+  - type: web
+    name: baseerah-web
+    runtime: static
+    buildCommand: bash frontend/scripts/write-config.sh
+    staticPublishPath: frontend
+    envVars:
+      - key: API_BASE_URL          # e.g. https://baseerah-api.onrender.com
+        sync: false
+      - key: USE_MOCK
+        value: "false"
+      - key: CONTACT_EMAIL
+        sync: false
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
