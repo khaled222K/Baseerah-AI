@@ -1,6 +1,6 @@
 import argparse, json, os, re
 from build_hadith_db import norm
-from evidence import assess, MESSAGES
+from evidence import assess, MESSAGES, T_LEX, hadith_evidence, open_db
 from verify import MARKS
 
 MAX_HADITH, MAX_TAFSIR, MAX_AYAH = 3, 2, 2
@@ -12,6 +12,9 @@ NO_MODEL = "تعذّر الاتصال بالنموذج، فتُعرض النصو
 BAD_QUOTE = "حُذف الشرح المولَّد لأنه تضمّن اقتباساً غير موجود في النصوص المعروضة، وتُعرض النصوص كما هي."
 DISCLOSURE = "هذه الإجابة من أداة مدعومة بالذكاء الاصطناعي وليست من مختص شرعي."
 GENERATED_LABEL = "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)"
+RETRIEVAL_ONLY = "وضع الاسترجاع فقط: تُعرض النصوص المرتبطة بالسؤال بمراجعها كما هي دون شرح مولَّد."
+IDENTIFIED = "يبدو أن المكتوب جزء من حديث أو وصفٌ له، وهذه أقرب المطابقات من القاعدة كما هي."
+MODES = ("retrieval", "anthropic", "openai")
 
 SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية المتاحة له فقط، ولست مفتياً.
 تُعطى سؤالاً ونصوصاً مرقّمة من قاعدة بيانات موثوقة (أحاديث من الصحيحين، وآيات، وتفسير). النصوص ستُعرض للمستخدم كما هي من القاعدة، فلا تنقلها ولا تعيد كتابتها.
@@ -26,8 +29,8 @@ SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية ال
 {"relevant": true, "used": ["H1", "T1"], "explanation": "..."}"""
 
 
-def llm_call(system, user):
-    if BACKEND == "openai":
+def llm_call(system, user, backend=None):
+    if (backend or BACKEND) == "openai":
         from openai import OpenAI
         client = OpenAI(base_url=os.environ.get("BASEERAH_BASE_URL") or None, api_key=os.environ.get("OPENAI_API_KEY", "local"))
         r = client.chat.completions.create(model=MODEL, messages=[
@@ -116,15 +119,45 @@ def records_only(out, units, reason):
     return out
 
 
-def answer(query, db_path="baseerah.db", vec_path="embeddings.db"):
-    a = assess(query, db_path, vec_path)
-    out = {"status": a["status"], "message": a["message"], "texts": [], "explanation": None,
-           "disclosure": DISCLOSURE, "generated_label": GENERATED_LABEL, "notice": None, "error": None}
+def identified(query, u, db_path, vec_path):
+    """Hadith the user quotes or paraphrases, as evidence entries straight from the database, or []."""
+    if u["intent"] != "hadith_lookup" and re.search(r"[؟?]", query):
+        return []
+    from identify import identify
+    found = identify(query, db_path, vec_path)
+    quote = [m for m in found["matches"] if m["match"] == "quote"]
+    if not quote and u["intent"] != "hadith_lookup":
+        return []
+    chosen = quote or [m for m in found["matches"][:1] if m["similarity"] >= T_LEX]
+    db = open_db(db_path)
+    return [dict(hadith_evidence(db, m["id"], query, m["similarity"], m["match"] == "quote"),
+                 match=m["match"], numbering_note=found["numbering_note"]) for m in chosen]
+
+
+def answer(query, db_path="baseerah.db", vec_path="embeddings.db", mode=None):
+    """mode: retrieval (no LLM) | anthropic | openai. Defaults to BASEERAH_LLM."""
+    mode = mode or BACKEND
+    from understand import understand
+    u = understand(query, backend="rules" if mode == "retrieval" else mode)
+    out = {"status": None, "message": None, "texts": [], "explanation": None, "mode": mode,
+           "disclosure": DISCLOSURE, "generated_label": GENERATED_LABEL, "notice": None, "error": None,
+           "understanding": u}
+    ident = identified(query, u, db_path, vec_path) if len(norm(query).split()) >= 2 else []
+    if ident:
+        out.update(status="identified", message=IDENTIFIED, texts=ident)
+        return out
+    a = assess(query, db_path, vec_path, rewrites=tuple(u["rewrites"]))
+    out.update(status=a["status"], message=a["message"])
     if a["status"] in ("insufficient", "clarify"):
         return out
     units = pick(a["evidence"])
+    if mode == "retrieval":
+        out["texts"] = [e for _, e in units]
+        out["notice"] = RETRIEVAL_ONLY
+        return out
     try:
-        verdict = parse(llm_call(SYSTEM, f"<question>\n{query}\n</question>\n\n<texts>\n{build_context(units)}\n</texts>"))
+        verdict = parse(llm_call(SYSTEM, f"<question>\n{query}\n</question>\n\n<texts>\n{build_context(units)}\n</texts>",
+                                 backend=mode))
     except Exception as ex:
         return records_only(out, units, str(ex))
     if not verdict:
@@ -149,7 +182,10 @@ def render(o):
         for e in o["texts"]:
             if e["kind"] == "hadith":
                 d = f" | الدرر: {e['dorar']['grade']} ({e['dorar']['muhaddith']})" if e["dorar"] else ""
-                print(f"\n[حديث] {e['ref']}\n  {e['text']}\n  الحكم: {e['grade']}{d}\n  الرابط: {e['link']['url']}")
+                num = f"، رقم {e['number']}" if e.get("number") else ""
+                print(f"\n[حديث] {e['ref']}{num}\n  {e['text']}\n  الحكم: {e['grade']}{d}\n  الرابط: {e['link']['url']}")
+                if e.get("numbering_note"):
+                    print(f"  ({e['numbering_note']})")
                 if e.get("note") and e["note"]["text"]:
                     print(f"  التوضيح ({e['note']['source']}): {e['note']['text']}")
             else:
@@ -170,5 +206,6 @@ if __name__ == "__main__":
     ap.add_argument("query")
     ap.add_argument("--db", default="baseerah.db")
     ap.add_argument("--vec", default="embeddings.db")
+    ap.add_argument("--mode", choices=MODES, default=None)
     a = ap.parse_args()
-    render(answer(a.query, a.db, a.vec))
+    render(answer(a.query, a.db, a.vec, a.mode))
