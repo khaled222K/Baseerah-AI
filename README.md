@@ -152,3 +152,4 @@ python -m http.server 5500 -d frontend     # http://localhost:5500
 ```
 
 The API contract, environment variables, Render deployment (`render.yaml`) and the test checklist are in [docs/FRONTEND.md](docs/FRONTEND.md).
+To publish the website on Vercel while the API (and Ollama) run on your own computer, see [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).

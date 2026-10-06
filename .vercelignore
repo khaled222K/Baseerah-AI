@@ -1,0 +1,9 @@
+# Vercel serves only the static frontend; the API runs elsewhere (see docs/DEPLOY_VERCEL.md).
+*.db
+training/
+runs/
+models/
+data_build/
+benchmark/
+tests/
+frontend/tests/
