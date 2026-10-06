@@ -73,6 +73,18 @@ Source object (all text fields are copied from the database):
 Verification compares wording only (no generation): the share of the submitted words found in order in a stored hadith matn or ayah.
 Thresholds are in `check.py`: `matched` needs ≥ 0.9 coverage; `partial_match` needs ≥ 0.7 coverage, ≥ 4 matched words and a 3-word contiguous run; `not_matched` needs ≥ 0.3 and returns no source.
 
+`POST /explain` `{"source_id": "hadith-5882"}` (hadith only). The text is read from the DB by ID.
+```json
+{ "status": "explained | unavailable | rejected | not_explainable | error",
+  "explanation": "generated text or null", "words": [{"word": "...", "meaning": "..."}],
+  "message": "status message", "text": "verbatim hadith", "reference": "...",
+  "stored_note": {"text": "...", "source": "..."} | null, "grounded_on": ["نص الحديث المعروض"],
+  "label": "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)", "disclosure": "...", "checks_failed": ["quote|number|collection"] }
+```
+- `unavailable`: the server runs in retrieval mode.
+- `rejected`: the generated text failed the grounding checks in `explain.py`, so it is not returned.
+- Final results are cached per hadith and model; failures are not cached.
+
 `GET /sources` → `{"categories": [{key, type, name, description, count, unit, items?}], "grading": {basis[], dorar_matched}}` (counts from the DB).
 
 `GET /model-info` → `{mode, model_name, provider, model_version, retrieval{...}, abstention{...}, evaluation}`. `evaluation` is `eval_metrics.json`, copied from real `evaluate.py` runs by `scripts/export_metrics.py`. When it is absent, the page shows "لم تُنشر نتيجة قياس نهائية بعد.".
@@ -91,7 +103,7 @@ Errors are always `{"status": "error", "message": "<generic Arabic text>"}` (422
 | | `CONTACT_EMAIL` | optional |
 | API | `BASEERAH_CORS_ORIGINS` | comma-separated allowed frontend origins |
 | | `BASEERAH_LLM` | `retrieval` (default, no key), `anthropic`, or `openai` |
-| | `ANTHROPIC_API_KEY` | only for `anthropic` |
+| | `ANTHROPIC_API_KEY` | only for `anthropic`; locally put it in `.env` (git-ignored, see `.env.example`); on Render set it as a secret env var |
 | | `BASEERAH_MODEL` | model id for the LLM backend |
 | | `BASEERAH_BASE_URL` | OpenAI-compatible server URL (required for `openai`, otherwise the SDK defaults to OpenAI's cloud) |
 | | `HF_HOME`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` | ship models with the build; no Hugging Face calls at runtime |
