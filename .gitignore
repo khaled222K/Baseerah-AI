@@ -17,3 +17,6 @@ runs/
 *.db-journal
 *.db-wal
 *.db-shm
+
+# fine-tuning experiment output (committed only if the model is adopted)
+embeddings_ft.db
