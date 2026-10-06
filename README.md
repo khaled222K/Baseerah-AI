@@ -93,3 +93,17 @@ RAG itself does not train any model; `training/finetune.py` is the only training
 | Gulf hold-out, default pipeline | 0.263 | 0.211 | 0.368 | 0.368 | 0.278 | 0.257 |
 
 Dense search alone improves clearly. In the default pipeline (hybrid + reranker), the change is +2 questions on eval_set and −1 on the Gulf hold-out, which is within noise. The evidence-gate thresholds are also calibrated to the base model's cosine scores. So the base model stays the default. Caveat: the same author wrote the training and eval questions, so even the dense-only gain may be optimistic. To reproduce: `python training/finetune.py`, then `python semantic.py embed --model models/e5-small-baseerah --vec embeddings_ft.db`, then `python evaluate.py --vec embeddings_ft.db`.
+
+## Web frontend
+
+`frontend/` is a static, RTL-first web app (vanilla JS, no build step):
+- **Pages:** ask/chat, verify a text, sources & reliability, model info, saved answers, about, privacy.
+- **API:** it talks only to this API, through `POST /chat`, `POST /verify`, `GET /sources`, `GET /model-info` and `GET /health` (in `api.py`).
+- **Verification:** `POST /verify` uses `check.py`, which compares wording only; nothing is generated.
+
+```bash
+uvicorn api:app --port 8000
+python -m http.server 5500 -d frontend     # http://localhost:5500
+```
+
+The API contract, environment variables, Render deployment (`render.yaml`) and the test checklist are in [docs/FRONTEND.md](docs/FRONTEND.md).
