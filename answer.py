@@ -40,7 +40,10 @@ def anthropic_call(system, user, max_tokens=LLM_MAX_TOKENS):
     client = anthropic.Anthropic()  # ANTHROPIC_API_KEY from the environment / .env
     kw = dict(model=MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": user}])
     if MODEL in FALLBACK_MODELS and os.environ.get("BASEERAH_FALLBACKS", "1") != "0":
-        r = client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kw)
+        try:
+            r = client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kw)
+        except TypeError:  # older SDK without a typed `fallbacks` argument: send the same field in the body
+            r = client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], extra_body={"fallbacks": "default"}, **kw)
     else:
         r = client.messages.create(**kw)
     if r.stop_reason == "refusal":

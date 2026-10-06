@@ -56,3 +56,24 @@ def test_refusal_raises(server):
     REPLY.update(message([], stop="refusal"))
     with pytest.raises(RuntimeError, match="declined"):
         answer.anthropic_call("sys", "user")
+
+
+def test_older_sdk_without_typed_fallbacks(monkeypatch):
+    import anthropic
+    sent = {}
+
+    class Msgs:
+        def create(self, **kw):
+            if "fallbacks" in kw:
+                raise TypeError("create() got an unexpected keyword argument 'fallbacks'")
+            sent.update(kw)
+            return type("R", (), {"stop_reason": "end_turn", "stop_details": None,
+                                  "content": [type("B", (), {"type": "text", "text": "ok"})()]})()
+
+    class Client:
+        def __init__(self, *a, **k):
+            self.beta = type("Beta", (), {"messages": Msgs()})()
+
+    monkeypatch.setattr(anthropic, "Anthropic", Client)
+    assert answer.anthropic_call("sys", "user") == "ok"
+    assert sent["extra_body"] == {"fallbacks": "default"} and "server-side-fallback-2026-07-01" in sent["betas"]

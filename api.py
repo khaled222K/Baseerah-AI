@@ -216,4 +216,11 @@ if os.environ.get("BASEERAH_SERVE_FRONTEND") == "1":
         return Response(f"window.BASEERAH_CONFIG = {json.dumps(cfg, ensure_ascii=False)};\n",
                         media_type="application/javascript", headers={"Cache-Control": "no-store"})
 
-    app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")
+    class FreshStatic(StaticFiles):
+        """Browsers must revalidate site files on every load, so an update is never hidden by a stale cache."""
+        async def get_response(self, path, scope):
+            resp = await super().get_response(path, scope)
+            resp.headers["Cache-Control"] = "no-cache"
+            return resp
+
+    app.mount("/", FreshStatic(directory=ROOT / "frontend", html=True), name="frontend")
