@@ -96,10 +96,11 @@ Recall@k = share of questions with at least one expected hadith/ayah in the top 
 | vector only (e5-small) | 0.333 | 0.449 | 0.577 | 0.405 |
 | hybrid (RRF) | 0.359 | 0.526 | 0.692 | 0.465 |
 | hybrid + reranker | 0.500 | 0.667 | 0.731 | 0.585 |
-| hybrid + reranker + rules rewrites (default) | 0.526 | 0.679 | 0.756 | 0.608 |
+| hybrid + reranker + rules rewrites (default) | 0.526 | 0.667 | 0.769 | 0.607 |
 
 - Reranker (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`): 23 questions improve, 12 get worse. It costs about 1.4 s/query on CPU. It is on by default (`BASEERAH_RERANK=0` turns it off).
 - Embedding the query with `norm()` instead of `clean()` hurts dense search (MRR 0.228 vs 0.405), because passages were embedded with `clean()`. So the dense side uses `clean()` and the lexical side uses `norm()`.
+- The reranker scores each passage against the question and up to 2 rewrites and keeps the best score (October 2026). Before that change, the default row was R@3 0.679, R@10 0.756, MRR 0.608; end-to-end numbers did not change.
 - Rules rewrites help only Gulf questions. Because the lexicon was written after the eval questions, they were re-checked on `eval_gulf_holdout.json` (19 Gulf questions written afterwards): with the reranker, R@1 0.211 → 0.263, MRR 0.251 → 0.278 (one question). **Unseen Gulf dialect remains the weakest area** (MRR ≈ 0.28 vs 0.65 for MSA).
 
 ### End to end, retrieval-only mode (`python evaluate.py --e2e legacy,hybrid+rerank`)
@@ -126,6 +127,17 @@ RAG itself does not train any model; `training/finetune.py` is the only training
 | Gulf hold-out, default pipeline | 0.263 | 0.211 | 0.368 | 0.368 | 0.278 | 0.257 |
 
 Dense search alone improves clearly. In the default pipeline (hybrid + reranker), the change is +2 questions on eval_set and −1 on the Gulf hold-out, which is within noise. The evidence-gate thresholds are also calibrated to the base model's cosine scores. So the base model stays the default. Caveat: the same author wrote the training and eval questions, so even the dense-only gain may be optimistic. To reproduce: `python training/finetune.py`, then `python semantic.py embed --model models/e5-small-baseerah --vec embeddings_ft.db`, then `python evaluate.py --vec embeddings_ft.db`.
+
+## Edge-case benchmark and audit
+
+- **Edge cases:** `benchmark/cases.json` holds 12 edge cases plus the site's 5 suggested questions:
+  - false premises, hostile tone and consensus questions;
+  - an altered ayah, a request for a hadith wording that does not exist;
+  - a personal case, and English questions.
+- **Results:** [docs/BENCHMARK.md](docs/BENCHMARK.md) has the outputs in retrieval-only mode and with `aya-expanse:8b`
+  (`python scripts/run_benchmark.py [--mode openai]`). `tests/test_benchmark.py` checks the deterministic parts.
+- **Audit:** [docs/AUDIT.md](docs/AUDIT.md) covers the active model and its settings, the retrieval models, the fallbacks,
+  the offline Hugging Face guard and read-only database access.
 
 ## Web frontend
 

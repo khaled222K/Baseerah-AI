@@ -87,7 +87,7 @@ Thresholds are in `check.py`: `matched` needs ≥ 0.9 coverage; `partial_match` 
 
 `GET /sources` → `{"categories": [{key, type, name, description, count, unit, items?}], "grading": {basis[], dorar_matched}}` (counts from the DB).
 
-`GET /model-info` → `{mode, model_name, provider, model_version, retrieval{...}, abstention{...}, evaluation}`. `evaluation` is `eval_metrics.json`, copied from real `evaluate.py` runs by `scripts/export_metrics.py`. When it is absent, the page shows "لم تُنشر نتيجة قياس نهائية بعد.".
+`GET /model-info` → `{mode, model_name, provider, model_version, runtime{...}, retrieval{...}, abstention{...}, evaluation}`. `runtime` (null fields omitted on the page) gives location (local/remote), host name, Ollama size/quantization/context when the model server is local, understanding backend, JSON mode, glosses, timeout and the fallback; it never contains keys or full URLs. `evaluation` is `eval_metrics.json`, copied from real `evaluate.py` runs by `scripts/export_metrics.py`. When it is absent, the page shows "لم تُنشر نتيجة قياس نهائية بعد.".
 
 `GET /health` → `{"status": "ok"}`.
 
@@ -106,7 +106,8 @@ Errors are always `{"status": "error", "message": "<generic Arabic text>"}` (422
 | | `ANTHROPIC_API_KEY` | only for `anthropic`; locally put it in `.env` (git-ignored, see `.env.example`); on Render set it as a secret env var |
 | | `BASEERAH_MODEL` | model id for the LLM backend |
 | | `BASEERAH_BASE_URL` | OpenAI-compatible server URL (required for `openai`, otherwise the SDK defaults to OpenAI's cloud) |
-| | `HF_HOME`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` | ship models with the build; no Hugging Face calls at runtime |
+| | `HF_HOME`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` | ship models with the build; no Hugging Face calls at runtime (set automatically once both models are cached, see `envfile.py`) |
+| | `BASEERAH_LLM_TIMEOUT` | seconds per LLM call (default 240 local / 75 Anthropic) |
 | | `BASEERAH_RERANK` | `0` disables the reranker (also disables its relevance gate) |
 | | `BASEERAH_SERVE_FRONTEND` | `1` = serve `frontend/` from the API |
 | | `BASEERAH_DB`, `BASEERAH_VEC` | database paths (defaults `baseerah.db`, `embeddings.db`) |
