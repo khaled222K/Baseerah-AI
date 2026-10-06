@@ -36,7 +36,7 @@ python -m http.server 5500 -d frontend          # frontend → http://localhost:
 No backend? Set `USE_MOCK: true` in `frontend/js/config.js`. A banner marks mock mode, and all mock text is labeled as placeholder.
 Mock trigger words for testing states are listed at the top of `js/mock.js` (e.g. `خطأ`, `لا-دليل`, `بدون-شرح`, `رابط-معطل`, `بطيء`).
 
-Single origin alternative: `BASEERAH_SERVE_FRONTEND=1 uvicorn api:app --port 8000` serves `frontend/` at `/`. Then set `API_BASE_URL: ""` in `config.js`.
+Single origin alternative: `BASEERAH_SERVE_FRONTEND=1 uvicorn api:app --port 8000` serves `frontend/` at `/`, plus a generated `js/config.js` that points at the same origin. It works under any host name (localhost, 127.0.0.1, a domain) with no CORS setup.
 
 ## API contract (implemented in `api.py`)
 
@@ -115,7 +115,7 @@ Errors are always `{"status": "error", "message": "<generic Arabic text>"}` (422
 
 Notes:
 - **LFS bandwidth:** each deploy pulls about 126 MB of LFS data. GitHub's free LFS bandwidth quota is limited, so frequent deploys may need a data pack or another way to ship the DBs.
-- **Single service:** you can skip the static site, set `BASEERAH_SERVE_FRONTEND=1` on the API, and set `API_BASE_URL: ""`.
+- **Single service:** you can skip the static site and set `BASEERAH_SERVE_FRONTEND=1` on the API. The site then calls the API on its own origin automatically.
 
 ## Testing
 
