@@ -13,3 +13,4 @@ openai>=1.40
 
 # Only for build_hadith_db.py dorar (maintainer tool, not runtime)
 beautifulsoup4>=4.12
+pytest>=8
