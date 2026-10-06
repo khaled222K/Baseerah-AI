@@ -80,3 +80,16 @@ Recall@k = share of questions with at least one expected hadith/ayah in the top 
 `T_RERANK` was picked on `calib_set.json` (the 14 questions in `evidence.py`'s `EVAL` plus 12 new out-of-scope ones), not on `eval_set.json`.
 
 Known limits: in retrieval-only mode there is no LLM relevance check, so a text can be shown because it shares a key word (e.g. "وش أجر اللي يبني مسجد؟" returns 9:107 about masjid al-ḍirār). One out-of-scope question in the eval set ("منو فاز بمباراة الهلال امس؟") still gets texts. The personal-case question in `evidence.py eval` now gets "no evidence" instead of a referral.
+
+### Fine-tuning (stage 6, optional, not adopted)
+
+RAG itself does not train any model; `training/finetune.py` is the only training in this project. With no API key available, the 215 synthetic questions (`training/synthetic_questions.jsonl`, 168 hadith) were written by hand by the assistant. `training/sample.py` excludes every eval target and any hadith sharing a 4-gram or ≥50% word overlap with one. Epochs were chosen on a dev split of the synthetic pairs only (base 0.714 → epoch 1 0.738 → later epochs lower; `training/finetune_log.json`). Then the whole corpus was re-embedded with the model (`embeddings_ft.db`) and evaluated once:
+
+| set / variant | base R@1 | FT R@1 | base R@10 | FT R@10 | base MRR | FT MRR |
+|---|---|---|---|---|---|---|
+| eval_set, vector only | 0.321 | 0.385 | 0.577 | 0.705 | 0.395 | 0.482 |
+| eval_set, default pipeline | 0.526 | 0.551 | 0.756 | 0.769 | 0.608 | 0.623 |
+| Gulf hold-out, vector only | 0.053 | 0.211 | 0.316 | 0.316 | 0.126 | 0.239 |
+| Gulf hold-out, default pipeline | 0.263 | 0.211 | 0.368 | 0.368 | 0.278 | 0.257 |
+
+Dense search alone improves clearly. In the default pipeline (hybrid + reranker), the change is +2 questions on eval_set and −1 on the Gulf hold-out, which is within noise. The evidence-gate thresholds are also calibrated to the base model's cosine scores. So the base model stays the default. Caveat: the same author wrote the training and eval questions, so even the dense-only gain may be optimistic. To reproduce: `python training/finetune.py`, then `python semantic.py embed --model models/e5-small-baseerah --vec embeddings_ft.db`, then `python evaluate.py --vec embeddings_ft.db`.
