@@ -36,6 +36,13 @@ def join_ya(ws):
     return out
 
 
+def unaltered(q, t):
+    """True when q's words that match t form one contiguous run with nothing changed, added or dropped inside it.
+    Extra words before or after (e.g. "قال تعالى") are allowed; a substituted word inside the quote is not."""
+    blocks = [b for b in SequenceMatcher(None, q, t, autojunk=False).get_matching_blocks() if b.size]
+    return len(blocks) == 1 and blocks[0].size >= MIN_RUN
+
+
 def ayah_candidates(r, text, n=100):
     keys = [k for k in r.lexical_records(text, n) if r.rec[k[1]][0] == "ayah"]
     ranked, _ = r.dense(text, 60)
@@ -57,7 +64,12 @@ def check(text, db_path="baseerah.db", vec_path="embeddings.db"):
         cov, run = max(score(qw, ts), score(join_ya(qw), ts))
         best = max(best, (cov, run, 1, key), key=lambda x: x[:3])
     cov, run, key = round(best[0], 3), best[1], best[3]
-    if cov >= T_MATCH:
+    exact = False
+    if key and key[0] == "records":
+        # Quran wording must be exact: one changed word (e.g. الصلاة for الصيام) is not a match.
+        ts = words(r.db.execute("SELECT text_search FROM records WHERE id=?", (key[1],)).fetchone()[0])
+        exact = any(unaltered(v, ts) for v in (words(text), join_ya(words(text))))
+    if cov >= T_MATCH and (exact or key[0] == "hadith"):
         status = "matched"
     elif cov >= T_PARTIAL and round(cov * len(qw)) >= MIN_PARTIAL_WORDS and run >= MIN_RUN:
         status = "partial_match"
@@ -76,7 +88,7 @@ def check(text, db_path="baseerah.db", vec_path="embeddings.db"):
         match = {"kind": "ayah", "id": key[1], "unit": f"ayah:{int(row[3])}:{int(row[4])}", "ref": row[0],
                  "text": row[1], "url": row[2], "source": QURAN}
     return {"status": status, "coverage": cov, "matched_words": round(cov * len(qw)), "total_words": len(qw),
-            "match": match}
+            "exact": exact, "match": match}
 
 
 if __name__ == "__main__":
