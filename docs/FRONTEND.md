@@ -15,14 +15,14 @@ frontend/
   about.html          عن بصيرة + #contact
   privacy.html        الخصوصية (+ clear local data)
   css/  variables.css  global.css  components.css  chat.css  pages.css  responsive.css
-  js/   config.js   ← the ONLY place that points at a backend (regenerated on Render)
+  js/   config.js   ← the ONLY place that points at a backend (regenerated at deploy time on Vercel or Render)
         api.js      ← all HTTP calls + response normalizers (the ONLY place to adapt to a contract change)
         mock.js     ← mock adapter (placeholder data only), enabled by USE_MOCK
         storage.js  ui.js  icons.js  chat.js  verify.js  sources.js  model.js  saved.js  about.js  privacy.js
   assets/logo/mark.svg   stand-in mark — replace with the official logo file (same name)
   assets/logo/favicon.svg
   assets/images/pattern.svg
-  scripts/write-config.sh   Render build step
+  scripts/write-config.sh   build step on Vercel and Render (writes js/config.js)
   tests/ui_test.py          Playwright end-to-end checks
 ```
 

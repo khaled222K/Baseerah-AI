@@ -1,92 +1,263 @@
 # Baseerah (بصيرة)
 
-Baseerah retrieves Islamic texts from a local database in response to a question: hadith from Sahih al-Bukhari and Sahih Muslim, Quran ayat, and Tafsir al-Muyassar. Retrieval is fully local (SQLite FTS5 + dense vectors). Nothing is searched on the internet.
+**إجابةٌ تستند إلى أصل. محتوى شرعي قابل للتتبع إلى مصدره.**
 
-> This tool is AI-assisted and is **not** a qualified religious scholar (ليست من مختص شرعي). Every displayed hadith, ayah, and tafsir comes verbatim from `text_original` / `matn_display` in the database. The model only picks IDs of retrieved passages and may write a short explanation; explanations that quote text not present in the displayed passages are dropped.
+Baseerah answers Islamic questions, mainly questions women ask, by showing the original texts with their references:
+- hadith from Sahih al-Bukhari and Sahih Muslim;
+- Quran ayat;
+- Tafsir al-Muyassar.
 
-## Setup
+Search is fully local (SQLite FTS5 plus dense vectors); nothing is looked up on the internet. A language model may add a
+short explanation, but it never writes the texts.
+
+> **Disclaimer.** Baseerah is AI-assisted and is **not** a qualified religious scholar (ليست من مختص شرعي).
+> - **Texts:** every hadith, ayah and tafsir shown is copied verbatim from the database by ID.
+> - **Personal cases:** questions about a personal case are referred to scholars.
+
+- **Live demo:** https://baseerah-ai-sigma.vercel.app
+  - The website is hosted on Vercel; the API runs on the team's computer through ngrok.
+  - The site answers only while that computer is on (see [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)).
+- **Challenge:** AI Challenge: Serving Islamic Content (تحدي الذكاء الاصطناعي في خدمة المحتوى الإسلامي), October 2026.
+
+## نبذة بالعربية
+
+**الفكرة:** بصيرة أداة تجيب عن الأسئلة الشرعية، وخصوصاً أسئلة المرأة، بعرض النصوص الأصلية بلفظها ومرجعها ورابطها. لا تعرض
+إجابة مولَّدة بلا دليل.
+
+**المصادر:** صحيح البخاري، وصحيح مسلم، والقرآن الكريم، والتفسير الميسّر. كلها مخزّنة في قاعدة بيانات محلية، ولا يُبحث في
+الإنترنت.
+
+**طريقة العمل:**
+1. تبحث بصيرة بالكلمات وبالمعنى.
+2. تعيد ترتيب النتائج حسب الصلة بالسؤال.
+3. تفحص كفاية الدليل.
+4. إن لم تجد نصاً مناسباً، تقول ذلك صراحةً.
+5. الأسئلة عن حالة شخصية تُحال إلى أهل العلم.
+
+**الشرح المولَّد:**
+- يكتبه نموذج لغوي محلي جاهز (لم ندرّب نموذجاً من الصفر).
+- يظهر دائماً بجانب النص الأصلي.
+- يُحذف إذا اقتبس كلاماً غير موجود في النصوص المعروضة.
+
+**أدوات الموقع:**
+- **اسألي بصيرة:** سؤال وجواب مع النصوص ومراجعها.
+- **تحقّقي من دليل:** تلصقين نصاً منسوباً فتطابقه بصيرة حرفياً مع المخزَّن، دون توليد.
+- **المصادر والموثوقية:** المصادر وأعدادها وأساس الحكم على الأحاديث.
+- **عن النموذج:** الإعدادات الفعلية للخادم.
+
+**الخصوصية:** لا يوجد حساب ولا تسجيل دخول، والمحادثات تُحفظ في متصفح المستخدمة فقط.
+
+## Contents
+
+- [Team](#team)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [How it works](#how-it-works)
+- [Data](#data)
+- [Evaluation](#evaluation)
+- [Project layout](#project-layout)
+- [Tests](#tests)
+- [Licenses and attribution](#licenses-and-attribution)
+- [Known limits](#known-limits)
+
+## Team
+
+| name | role |
+|---|---|
+| Hoor Fawaz Alotaibi (حور فواز العتيبي) | data and knowledge base: collecting, cleaning and classifying the sources |
+| Khalid Fawaz Alotaibi (خالد فواز العتيبي) | AI and backend: retrieval, model integration, linking to the database |
+| Danah Fawaz Alotaibi (دانة فواز العتيبي) | frontend and user experience, linking it to the backend, data preparation |
+
+### Timeline
+
+| date | work |
+|---|---|
+| before Oct 4 | idea and planning only, no code |
+| Oct 4 | knowledge base: Quran, tafsir, hadith collection |
+| Oct 5 | retrieval, grades and links, evidence-sufficiency test (12/14) |
+| Oct 6 | model integration, website, live demo, tests, public repo |
+
+## Quick start
+
+**Requirements:**
+- Python 3.11 or newer (tested on 3.12 and 3.13);
+- Git LFS;
+- about 2 GB of RAM for retrieval only;
+- about 8 GB more for the optional local model.
 
 ```bash
-git lfs install && git lfs pull          # the two .db files are stored with Git LFS
+git clone https://github.com/khaled222K/Baseerah-AI.git && cd Baseerah-AI
+git lfs install && git lfs pull          # baseerah.db and embeddings.db are stored with Git LFS
+python -m venv .venv && source .venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
+python scripts/fetch_models.py           # downloads the two retrieval models once
 ```
 
-The first run downloads `intfloat/multilingual-e5-small` from Hugging Face once; after that everything runs offline.
-
-## Data
-
-| File | Contents |
-|---|---|
-| `baseerah.db` | `records` (6,236 ayat + 6,236 tafsir entries), `hadith` (14,736: Bukhari + Muslim), `weak_hadith`, `hadith_notes`, FTS5 indexes `records_fts`, `hadith_fts` |
-| `embeddings.db` | `vec(kind, ref_id, v)` float32 e5 vectors, `meta`, and `rfts` (FTS5 over normalized records text) |
-
-Runtime code opens both databases read-only (`mode=ro`, see `db.py`). Only maintainer build steps write:
-
-- `python semantic.py embed` writes vectors and `rfts` into `embeddings.db` (resumable, skips rows that already exist).
-- `python build_hadith_db.py build|dorar` (re)builds or enriches the `hadith` table. Not needed for normal use, and it changes the DB.
-- `data_build/load_quran.py` and `data_build/load_tafsir.py` rebuild `records` from `Quran.json` / `Tafsir.csv` into `data_build/baseerah.db` (a separate file next to the loaders). The `url` column of the shipped DB was filled in separately and is not produced by these loaders.
-
-## Free AI explanations with a local model (no key)
-
-Install [Ollama](https://ollama.com), then `ollama pull aya-expanse:8b` and use option A in `.env.example`.
-Tested on 3 hadith and one chat question:
-
-| model | explanations (meaning correct) | notes |
-|---|---|---|
-| `qwen2.5:3b` | not usable | garbled words, Chinese glosses, reversed one hadith's meaning |
-| `qwen2.5:7b` | 3/3 | its chat explanation was blocked by the quote check; Apache 2.0 |
-| `aya-expanse:8b` | 3/3 | best Arabic of the three; CC-BY-NC (non-commercial) |
-
-On a 4-core CPU without a GPU, each answer took about 25–55 s.
-
-With a local model (`BASEERAH_LLM=openai`):
-- word glosses are off (`BASEERAH_EXPLAIN_WORDS=1` turns them on), since they were the least reliable part;
-- the question rewrite uses the rules (`BASEERAH_UNDERSTAND` overrides this);
-- replies are requested in JSON mode;
-- any explanation containing Latin or CJK letters is rejected;
-- the site's request timeout is raised to 5 minutes.
-
-These checks catch garbled output, invented quotes, numbers and book names. They cannot catch a fluent sentence that misreads the hadith, which is why the hadith itself is always shown next to the explanation.
-
-## Using your Anthropic API key
+**Run the website and the API on one address:**
 
 ```bash
-cp .env.example .env      # then open .env and paste your key after ANTHROPIC_API_KEY=
+BASEERAH_SERVE_FRONTEND=1 BASEERAH_LLM=retrieval uvicorn api:app --host 127.0.0.1 --port 8000
+# open http://127.0.0.1:8000
 ```
-`.env` stays on your computer: it is git-ignored and loaded automatically by `ask.py` and `api.py`. Never commit it or paste the key into code. With `BASEERAH_LLM=anthropic` in `.env`:
-- answers get a short explanation;
-- hadith get the **«اشرح الحديث»** button: an explanation of one hadith, grounded only in its stored text (and its stored note, if any). It is shown only if every quotation is in the text, it adds no numbers or other hadith collections, and word glosses are for words that occur in the hadith.
 
-The default model is `claude-sonnet-5-5`; set `BASEERAH_MODEL=claude-opus-5-5` for a stronger, more expensive one. Requests on these models enable Anthropic's server-side refusal fallback (`BASEERAH_FALLBACKS=0` turns it off).
+`BASEERAH_LLM=retrieval` shows the stored texts only, with no model, key or GPU. It answers in a few seconds and never
+shows generated content.
+
+### Optional: AI explanations
+
+You can add AI explanations with a local model (free, no key):
+1. Install [Ollama](https://ollama.com).
+2. Run `ollama pull aya-expanse:8b` (about 5 GB).
+3. Run `cp .env.example .env`. Option A in that file is already set for this model.
+
+Or use the Anthropic API:
+1. In `.env`, set `BASEERAH_LLM=anthropic`.
+2. Paste your key after `ANTHROPIC_API_KEY=`.
+
+`.env` is git-ignored: never commit it.
+
+| model | measured result | license |
+|---|---|---|
+| `aya-expanse:8b` (default local) | best Arabic of the tested local models; still misreads some texts (see [docs/BENCHMARK.md](docs/BENCHMARK.md)) | CC-BY-NC 4.0 (non-commercial) |
+| `qwen2.5:7b` | 3/3 correct hadith explanations | Apache 2.0 |
+| `qwen2.5:3b` | not usable (garbled words, reversed one hadith's meaning) | — |
+| `claude-sonnet-5-5` (Anthropic API) | default for `BASEERAH_LLM=anthropic` | Anthropic commercial terms |
+
+On a 4-core CPU without a GPU, the local 8B model takes 30–90 s per answer.
+
+**For a public demo, we recommend retrieval-only mode.** The quotation and script checks catch:
+- invented quotes;
+- garbled output;
+- foreign scripts.
+
+They cannot catch a fluent sentence that misreads a text. That is why the texts are always shown next to the explanation.
 
 ## Usage
 
-```bash
-python ask.py "ما حق الجار في الإسلام؟"                    # mode (a): retrieval only, no LLM, no key
-python ask.py "وش أركان الإسلام؟" --mode anthropic          # mode (b): explanation via Anthropic API (ANTHROPIC_API_KEY)
-BASEERAH_LLM=openai BASEERAH_BASE_URL=http://localhost:11434/v1 BASEERAH_MODEL=qwen2.5:7b \
-  python ask.py "كم عدة المطلقة؟"                           # mode (c): local OpenAI-compatible server (Ollama, llama.cpp…)
-python ask.py "ليس الشديد بالصرعة" --json                   # identifies the hadith being quoted
+**Command line:**
 
-uvicorn api:app --port 8000      # GET /ask?q=...&mode=retrieval   or   POST /ask {"q": "...", "mode": "retrieval"}
+```bash
+python ask.py "ما حق الجار في الإسلام؟"                    # retrieval only (no model, no key)
+python ask.py "وش أركان الإسلام؟" --mode anthropic          # explanation via the Anthropic API
+BASEERAH_LLM=openai BASEERAH_BASE_URL=http://localhost:11434/v1 BASEERAH_MODEL=aya-expanse:8b \
+  python ask.py "كم عدة المطلقة؟"                           # local OpenAI-compatible server (Ollama, llama.cpp…)
+python ask.py "ليس الشديد بالصرعة" --json                   # identifies the hadith being quoted
 ```
 
-Without `--mode`, `ask.py` and the API use `BASEERAH_LLM` if set, otherwise retrieval-only mode. If the LLM is unreachable, the texts are still shown, without an explanation.
+**API:** start it with `uvicorn api:app --port 8000`.
+
+| endpoint | purpose |
+|---|---|
+| `POST /chat` | the website's question → answer (texts, references, optional explanation) |
+| `GET /ask?q=…` / `POST /ask` | the same pipeline, raw output |
+| `POST /verify` | compares a pasted text with the stored ayat/hadith, word for word (nothing generated) |
+| `POST /explain` | short explanation of one stored hadith (needs an LLM) |
+| `GET /sources` | source counts and grade basis |
+| `GET /model-info` | the server's live settings (models, thresholds, offline state) |
+| `GET /health` | health check |
+
+**Choosing the mode:** without `--mode`, `ask.py` and the API use `BASEERAH_LLM` if it is set, otherwise retrieval-only
+mode.
+
+**If the model fails:** if it is unreachable, slow or returns bad output, the texts are still shown, with a notice and no
+explanation.
+
+### Settings (environment variables or `.env`)
+
+| variable | default | meaning |
+|---|---|---|
+| `BASEERAH_LLM` | `retrieval` | `retrieval`, `openai` (any OpenAI-compatible server, e.g. Ollama) or `anthropic` |
+| `BASEERAH_BASE_URL` | — | URL of the OpenAI-compatible server, e.g. `http://localhost:11434/v1` |
+| `BASEERAH_MODEL` | `claude-sonnet-5-5` | model name for the chosen backend |
+| `ANTHROPIC_API_KEY` | — | only for `anthropic` |
+| `BASEERAH_LLM_TIMEOUT` | 240 s (local) | per-call timeout for the model |
+| `BASEERAH_TIMEOUT_MS` | 90000; 300000 with a local model | how long the website waits for an answer (ms) |
+| `BASEERAH_RERANK` | `1` | `0` turns the reranker off |
+| `BASEERAH_UNDERSTAND` | `rules` with a local model | how questions are rewritten: `rules`, `anthropic` or `openai` |
+| `BASEERAH_EXPLAIN_WORDS` | off with a local model | `1` adds word glosses in "اشرح الحديث" |
+| `BASEERAH_FALLBACKS` | `1` | Anthropic server-side refusal fallback |
+| `BASEERAH_CORS_ORIGINS` | localhost | allowed website origins, comma-separated |
+| `BASEERAH_SERVE_FRONTEND` | off | `1` serves `frontend/` from the API on the same address |
+| `BASEERAH_DB`, `BASEERAH_VEC` | `baseerah.db`, `embeddings.db` | database paths |
 
 ## How it works
 
-1. **Query understanding** (`understand.py`): the question (Gulf dialect or MSA) becomes formal-Arabic search rewrites and keywords. The `rules` backend (Gulf→MSA lexicon + keyword extraction) needs no model; the `anthropic` / `openai` backends ask the LLM for JSON only, with no search tool. Rewrites are used for search only and are never displayed. Any LLM failure falls back to `rules`.
-2. **Hadith identification** (`identify.py`): when the user types part of a hadith or describes one ("حديث معناه…"), candidates from FTS + dense search are scored with `SequenceMatcher` against the normalized matn. The result gives the hadith ID, book, number and reference. Numbers follow the hadith-json dataset and can differ from printed editions; the output says so.
-3. **Hybrid retrieval** (`retrieve.py`): BM25 over `hadith_fts` and `rfts`, plus dense e5 search over all vectors, fused with Reciprocal Rank Fusion (k=60). The query and each rewrite add their own ranked lists. A multilingual cross-encoder reranks the top 30 (on by default; `BASEERAH_RERANK=0` turns it off, `retrieve.py --rerank` for the CLI).
-4. **Evidence gate** (`evidence.py`): a hit is shown only if it passes the existing similarity thresholds. If nothing passes: "لم أجد نصاً مباشراً مرتبطاً بالسؤال في المصادر المتاحة…". Personal-case questions are referred to scholars.
-5. **Explanation** (`answer.py`, modes b/c): the LLM may only pick IDs among the retrieved texts and write a short explanation. Any explanation that quotes text not present in the displayed passages is dropped (`quotes_ok`, using `verify.MARKS`).
+```
+question ─► 1 understand ─► 2 identify ─► 3 hybrid retrieval ─► 4 evidence gate ─► 5 optional explanation ─► texts + references
+```
+
+1. **Query understanding** (`understand.py`):
+   - The question, in Gulf dialect, MSA or English religious terms, becomes formal-Arabic search rewrites and keywords.
+   - The default `rules` backend uses a Gulf→MSA lexicon and needs no model.
+   - Rewrites are used for search only and are never displayed.
+2. **Hadith identification** (`identify.py`):
+   - Triggered when the user types part of a hadith or describes one.
+   - Candidates are scored with `SequenceMatcher` against the normalized matn.
+3. **Hybrid retrieval** (`retrieve.py`):
+   - BM25 over `hadith_fts` and `rfts`, plus dense `multilingual-e5-small` search over all 27,208 vectors.
+   - The two lists are fused with Reciprocal Rank Fusion (k=60).
+   - A multilingual cross-encoder reranks the top 30, scoring each passage against the question and up to 2 rewrites.
+4. **Evidence gate** (`evidence.py`):
+   - A text is shown only if:
+     - its reranker score is at least −2.5; and
+     - its cosine similarity is at least 0.92, or at least 0.80 with a shared search word.
+   - Otherwise the answer is: «لم أجد نصاً مباشراً مرتبطاً بالسؤال في المصادر المتاحة…».
+   - Personal-case questions always get a referral to scholars, and no generated explanation.
+5. **Explanation** (`answer.py`, optional):
+   - The model may only pick IDs of retrieved texts and write a short explanation.
+   - The explanation is dropped if it quotes text that is not in the displayed passages, or contains Latin or CJK letters.
+6. **Verification** (`check.py`, `verify.py`):
+   - Pasted text is compared with the stored wording.
+   - An ayah counts as matched only if its wording is one exact contiguous run.
+   - An ayah with a changed word gets a warning and the authentic ayah with its reference.
+
+Details of every setting, fallback and safety check: [docs/AUDIT.md](docs/AUDIT.md).
+
+## Data
+
+| file | contents |
+|---|---|
+| `baseerah.db` | `records` (6,236 ayat + 6,236 tafsir entries), `hadith` (14,736: Bukhari 7,277 + Muslim 7,459), `weak_hadith`, `hadith_notes` (20), FTS5 indexes `records_fts`, `hadith_fts` |
+| `embeddings.db` | `vec(kind, ref_id, v)`: float32 e5 vectors for all 27,208 texts, `meta`, and `rfts` (FTS5 over normalized text) |
+
+**Women-related hadith:** 1,277 hadith are tagged as related to women:
+- 875 women-specific;
+- 402 general.
+
+**Dorar grades:** 904 hadith carry the grade found on dorar.net.
+
+**Read-only at runtime:** all runtime code opens both databases read-only (`mode=ro`, see `db.py`). Only the maintainer
+build steps write:
+- `python semantic.py embed`: writes the vectors and `rfts` into `embeddings.db`.
+- `python build_hadith_db.py build|dorar`: rebuilds or enriches the `hadith` table. Not needed for normal use.
+- `data_build/load_quran.py` and `data_build/load_tafsir.py`:
+  - rebuild `records` from `Quran.json` and `Tafsir.csv` into a separate `data_build/baseerah.db`;
+  - the `url` column of the shipped database was filled in separately.
+
+**Hadith numbering** follows the hadith-json dataset and can differ from printed editions; the output says so.
 
 ## Evaluation
 
-`eval_set.json` has 86 items: 44 hadith topic questions, 24 ayah questions, 10 quotes/paraphrases of hadith, and 8 out-of-scope questions. 33 are in Gulf dialect, 53 in MSA. Every expected ID was checked by reading the text in `baseerah.db`. No item is marked `unverified`; items marked that way would be excluded from scores. Expected lists can miss other narrations of the same hadith, so scores are a lower bound.
+All numbers below come from actual runs of `python evaluate.py` on `eval_set.json`.
 
-Recall@k = share of questions with at least one expected hadith/ayah in the top k (a tafsir hit counts as its ayah). MRR is computed over the top 10. All numbers below come from `python evaluate.py` runs (`runs/*.json`, not committed).
+**The set has 86 questions:**
+
+| type | count |
+|---|---|
+| hadith topic questions | 44 |
+| ayah questions | 24 |
+| quotes or paraphrases of hadith | 10 |
+| out of scope | 8 |
+
+- **Language:** 33 are in Gulf dialect and 53 in MSA.
+- **Expected IDs:** each expected ID was checked by reading its text in `baseerah.db`.
+- **Lower bound:** an expected list can miss other narrations of the same hadith, so the scores are a lower bound.
+
+**Measures:**
+- **Recall@k:** share of questions with at least one expected text in the top k (a tafsir hit counts as its ayah).
+- **MRR:** computed over the top 10.
+- **Margin of error:** with 78 scored questions, it is roughly ±11 points.
 
 ### Retrieval (78 scored questions)
 
@@ -96,60 +267,153 @@ Recall@k = share of questions with at least one expected hadith/ayah in the top 
 | vector only (e5-small) | 0.333 | 0.449 | 0.577 | 0.405 |
 | hybrid (RRF) | 0.359 | 0.526 | 0.692 | 0.465 |
 | hybrid + reranker | 0.500 | 0.667 | 0.731 | 0.585 |
-| hybrid + reranker + rules rewrites (default) | 0.526 | 0.667 | 0.769 | 0.607 |
+| **hybrid + reranker + rules rewrites (default)** | **0.526** | **0.667** | **0.769** | **0.607** |
 
-- Reranker (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`): 23 questions improve, 12 get worse. It costs about 1.4 s/query on CPU. It is on by default (`BASEERAH_RERANK=0` turns it off).
-- Embedding the query with `norm()` instead of `clean()` hurts dense search (MRR 0.228 vs 0.405), because passages were embedded with `clean()`. So the dense side uses `clean()` and the lexical side uses `norm()`.
-- The reranker scores each passage against the question and up to 2 rewrites and keeps the best score (October 2026). Before that change, the default row was R@3 0.679, R@10 0.756, MRR 0.608; end-to-end numbers did not change.
-- Rules rewrites help only Gulf questions. Because the lexicon was written after the eval questions, they were re-checked on `eval_gulf_holdout.json` (19 Gulf questions written afterwards): with the reranker, R@1 0.211 → 0.263, MRR 0.251 → 0.278 (one question). **Unseen Gulf dialect remains the weakest area** (MRR ≈ 0.28 vs 0.65 for MSA).
+- **Reranker:**
+  - 23 questions improve and 12 get worse.
+  - It costs about 1.4 s per query on CPU.
+- **Rewrites:** the reranker scores each passage against the question and up to 2 rewrites and keeps the best score.
+  - Before this change, the default row was R@3 0.679, R@10 0.756, MRR 0.608.
+  - End-to-end numbers did not change.
+- **Query normalization:** the dense side embeds the query with `clean()`, not `norm()`, because the passages were
+  embedded with `clean()`. Using `norm()` drops dense MRR from 0.405 to 0.228.
+- **Unseen Gulf dialect is the weakest area:**
+  - MRR is about 0.28, against about 0.65 for MSA.
+  - This was measured on `eval_gulf_holdout.json`: 19 Gulf questions written after the lexicon.
 
 ### End to end, retrieval-only mode (`python evaluate.py --e2e legacy,hybrid+rerank`)
 
-| pipeline | expected text shown (78) | out-of-scope rejected (8) |
+| pipeline | expected text shown (78) | out of scope rejected (8) |
 |---|---|---|
 | original `semantic_search` (women-specific hadith only) | 27 | 5 |
 | hybrid + reranker, no rerank gate | 52 | 4 |
-| hybrid + reranker + gate `T_RERANK=-2.5` (default) | 47 | 7 |
+| **hybrid + reranker + gate `T_RERANK=-2.5` (default)** | **47** | **7** |
 
-`T_RERANK` was picked on `calib_set.json` (the 14 questions in `evidence.py`'s `EVAL` plus 12 new out-of-scope ones), not on `eval_set.json`.
+**Evidence-sufficiency test:** 12/14 correct decisions (answer, abstain or refer) on the questions in `evidence.py eval`.
 
-Known limits: in retrieval-only mode there is no LLM relevance check, so a text can be shown because it shares a key word (e.g. "وش أجر اللي يبني مسجد؟" returns 9:107 about masjid al-ḍirār). One out-of-scope question in the eval set ("سعر الذهب اليوم") still gets texts (hadith about gold share its key word). The personal-case question in `evidence.py eval` now gets "no evidence" instead of a referral.
+**How the gate threshold was chosen:** `T_RERANK` was picked on `calib_set.json` (26 questions, 22/26 correct), not on
+`eval_set.json`.
 
-### Fine-tuning (stage 6, optional, not adopted)
+### Edge-case benchmark
 
-RAG itself does not train any model; `training/finetune.py` is the only training in this project. With no API key available, the 215 synthetic questions (`training/synthetic_questions.jsonl`, 168 hadith) were written by hand by the assistant. `training/sample.py` excludes every eval target and any hadith sharing a 4-gram or ≥50% word overlap with one. Epochs were chosen on a dev split of the synthetic pairs only (base 0.714 → epoch 1 0.738 → later epochs lower; `training/finetune_log.json`). Then the whole corpus was re-embedded with the model (`embeddings_ft.db`) and evaluated once:
+`benchmark/cases.json` has 17 cases:
+- 12 edge cases: false premises, hostile tone, consensus questions, an altered ayah, a request for a hadith that does not
+  exist, a personal case, and English questions;
+- the site's 5 suggested questions.
 
-| set / variant | base R@1 | FT R@1 | base R@10 | FT R@10 | base MRR | FT MRR |
-|---|---|---|---|---|---|---|
-| eval_set, vector only | 0.321 | 0.385 | 0.577 | 0.705 | 0.395 | 0.482 |
-| eval_set, default pipeline | 0.526 | 0.551 | 0.756 | 0.769 | 0.608 | 0.623 |
-| Gulf hold-out, vector only | 0.053 | 0.211 | 0.316 | 0.316 | 0.126 | 0.239 |
-| Gulf hold-out, default pipeline | 0.263 | 0.211 | 0.368 | 0.368 | 0.278 | 0.257 |
+**Results** (my judgement against each case's expected behavior):
 
-Dense search alone improves clearly. In the default pipeline (hybrid + reranker), the change is +2 questions on eval_set and −1 on the Gulf hold-out, which is within noise. The evidence-gate thresholds are also calibrated to the base model's cosine scores. So the base model stays the default. Caveat: the same author wrote the training and eval questions, so even the dense-only gain may be optimistic. To reproduce: `python training/finetune.py`, then `python semantic.py embed --model models/e5-small-baseerah --vec embeddings_ft.db`, then `python evaluate.py --vec embeddings_ft.db`.
+| mode | strict passes | wrong content |
+|---|---|---|
+| retrieval-only | 5/17 | never showed invented content |
+| `aya-expanse:8b` | 4/17 | wrong or unsupported content in 4 answers |
 
-## Edge-case benchmark and audit
+Full outputs and the fixes they led to: [docs/BENCHMARK.md](docs/BENCHMARK.md).
 
-- **Edge cases:** `benchmark/cases.json` holds 12 edge cases plus the site's 5 suggested questions:
-  - false premises, hostile tone and consensus questions;
-  - an altered ayah, a request for a hadith wording that does not exist;
-  - a personal case, and English questions.
-- **Results:** [docs/BENCHMARK.md](docs/BENCHMARK.md) has the outputs in retrieval-only mode and with `aya-expanse:8b`
-  (`python scripts/run_benchmark.py [--mode openai]`). `tests/test_benchmark.py` checks the deterministic parts.
-- **Audit:** [docs/AUDIT.md](docs/AUDIT.md) covers the active model and its settings, the retrieval models, the fallbacks,
-  the offline Hugging Face guard and read-only database access.
+**To reproduce:** `python scripts/run_benchmark.py [--mode openai]`.
 
-## Web frontend
+### Fine-tuning (optional experiment, not adopted)
 
-`frontend/` is a static, RTL-first web app (vanilla JS, no build step):
-- **Pages:** ask/chat, verify a text, sources & reliability, model info, saved answers, about, privacy.
-- **API:** it talks only to this API, through `POST /chat`, `POST /verify`, `GET /sources`, `GET /model-info` and `GET /health` (in `api.py`).
-- **Verification:** `POST /verify` uses `check.py`, which compares wording only; nothing is generated.
+**Training in this project:**
+- RAG does not train any model.
+- `training/finetune.py` is the only training in this project.
+- The training data is 215 synthetic questions (`training/synthetic_questions.jsonl`).
+- `training/sample.py` excludes every eval target and any near-duplicate of one.
 
-```bash
-uvicorn api:app --port 8000
-python -m http.server 5500 -d frontend     # http://localhost:5500
+**Effect of fine-tuning e5-small on these questions:**
+
+| setting | MRR before | MRR after | R@10 before | R@10 after |
+|---|---|---|---|---|
+| dense search alone | 0.395 | 0.482 | 0.577 | 0.705 |
+| default pipeline | 0.608 | 0.623 | 0.756 | 0.769 |
+| Gulf hold-out (default pipeline) | 0.278 | 0.257 | 0.368 | 0.368 |
+
+The gain in the default pipeline is within noise, so the base model stays the default.
+
+**To reproduce:**
+1. `python training/finetune.py`
+2. `python semantic.py embed --model models/e5-small-baseerah --vec embeddings_ft.db`
+3. `python evaluate.py --vec embeddings_ft.db`
+
+## Project layout
+
+```
+api.py              FastAPI server: /chat /ask /verify /explain /sources /model-info /health
+answer.py           full pipeline: understand → retrieve → evidence gate → optional LLM explanation + quote checks
+understand.py       question rewriting (Gulf→MSA lexicon, English religious terms, request framing)
+identify.py         identifies a quoted or described hadith
+retrieve.py         hybrid search (FTS5 BM25 + e5 vectors, RRF) and cross-encoder reranking
+semantic.py         e5 embeddings: search and the maintainer `embed` command
+evidence.py         evidence gate, referral of personal cases, user messages
+explain.py          "اشرح الحديث": grounded explanation of one hadith
+check.py, verify.py word-for-word verification of pasted ayat and hadith
+db.py               read-only SQLite connections
+envfile.py          loads .env; switches Hugging Face to offline when the models are cached
+ask.py              command line
+evaluate.py         retrieval and end-to-end evaluation
+build_hadith_db.py  maintainer tool: builds the hadith table, adds dorar.net grades
+baseerah.db, embeddings.db              the data (Git LFS)
+eval_set.json, calib_set.json, eval_gulf_holdout.json, eval_metrics.json   evaluation sets and latest metrics
+data_build/         Quran.json, Tafsir.csv and their loaders
+frontend/           static RTL website (HTML, CSS, vanilla JS, no build step); see docs/FRONTEND.md
+benchmark/          edge-case questions and saved outputs
+training/           optional fine-tuning experiment (not adopted)
+scripts/            fetch_models.py, run_benchmark.py, export_metrics.py
+tests/              pytest suite
+docs/               AUDIT.md, BENCHMARK.md, FRONTEND.md, DEPLOY_VERCEL.md
+vercel.json, render.yaml   website on Vercel; optional full deployment on Render
 ```
 
-The API contract, environment variables, Render deployment (`render.yaml`) and the test checklist are in [docs/FRONTEND.md](docs/FRONTEND.md).
-To publish the website on Vercel while the API (and Ollama) run on your own computer, see [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
+## Tests
+
+```bash
+python -m pytest -q                     # pipeline, API, verification, benchmark guards, offline guard
+python frontend/tests/ui_test.py        # 39 browser checks (Playwright); see its docstring for the 3 local servers it needs
+```
+
+**What the tests lock:**
+- every displayed text equals the stored one;
+- personal cases are referred;
+- altered ayat are flagged;
+- the model's failure falls back to the texts;
+- the API reports read-only database access.
+
+Latest run: 46 passed.
+
+## Licenses and attribution
+
+**Baseerah's own code:** the repository has no license file yet. Until the team adds one, all rights are reserved by the
+authors.
+
+**Third-party parts** keep their own licenses:
+
+| component | used for | license / terms |
+|---|---|---|
+| [hadith-json](https://github.com/AhmedBaset/hadith-json) (Sahih al-Bukhari, Sahih Muslim) | hadith texts and numbering | ISC (per the project's `package.json`) |
+| Quran text (Hafs) and Tafsir al-Muyassar: King Fahd Glorious Quran Printing Complex data files | ayat and tafsir | KFGQPC terms of use; texts are used unmodified |
+| [dorar.net](https://dorar.net) | grade and link shown for 904 hadith | content belongs to dorar.net; Baseerah stores the grade and links to the source, it does not fetch at runtime |
+| [intfloat/multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | dense search | MIT |
+| [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | reranking | Apache 2.0 |
+| `aya-expanse:8b` (Cohere For AI), through Ollama | optional local explanations | CC-BY-NC 4.0: **non-commercial use only** |
+| `qwen2.5:7b` (alternative local model) | optional local explanations | Apache 2.0 |
+| Anthropic API (optional) | optional explanations | Anthropic commercial terms; needs your own key |
+| IBM Plex Sans Arabic, Alexandria (Google Fonts) | website fonts | SIL Open Font License 1.1 |
+| Python libraries (`requirements.txt`): FastAPI, sentence-transformers, PyTorch, NumPy… | runtime | each under its own open-source license |
+
+**Commercial use** needs:
+- a model other than `aya-expanse` (for example `qwen2.5:7b`, or retrieval-only mode);
+- a check of the KFGQPC and dorar.net terms.
+
+## Known limits
+
+- **Corpus:** Bukhari, Muslim, the Quran and al-Muyassar only.
+  - There are no fiqh, sīra or history sources.
+  - Questions about consensus, scholarly disagreement or history get "no direct text", or loosely related texts.
+- **Retrieval-only mode** has no relevance check by a model. A text can appear because it shares a key word with the
+  question.
+- **The local 8B model can misread a text** while writing fluent Arabic. The texts are always shown next to its
+  explanation, and it is labeled "شرح مولَّد بالذكاء الاصطناعي (ليس نصاً شرعياً)".
+- **Evaluation sets are small** (86 questions), and the same team wrote the lexicon and the questions.
+  - The scores can be optimistic.
+  - The Gulf hold-out set is the fairer measure for dialect questions.
+- **Live demo:** it runs only while the team's computer, the API and ngrok are on.
