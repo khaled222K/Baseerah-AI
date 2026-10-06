@@ -1,4 +1,5 @@
 import argparse, json, os, re
+import envfile  # noqa: F401  (loads .env before settings are read)
 from build_hadith_db import norm
 from evidence import assess, MESSAGES, T_LEX, hadith_evidence, open_db
 from verify import MARKS
@@ -29,6 +30,26 @@ SYSTEM = """أنت مساعد بحثي يعرض النصوص الشرعية ال
 {"relevant": true, "used": ["H1", "T1"], "explanation": "..."}"""
 
 
+# Models that accept server-side refusal fallback (fallbacks: "default", Claude API only). Set BASEERAH_FALLBACKS=0 to disable.
+FALLBACK_MODELS = {"claude-sonnet-5-5", "claude-opus-5-5", "claude-opus-5", "claude-fable-5-1"}
+LLM_MAX_TOKENS = 16000  # current Claude models think before answering, and thinking counts toward max_tokens
+
+
+def anthropic_call(system, user, max_tokens=LLM_MAX_TOKENS):
+    import anthropic
+    client = anthropic.Anthropic()  # ANTHROPIC_API_KEY from the environment / .env
+    kw = dict(model=MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": user}])
+    if MODEL in FALLBACK_MODELS and os.environ.get("BASEERAH_FALLBACKS", "1") != "0":
+        r = client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kw)
+    else:
+        r = client.messages.create(**kw)
+    if r.stop_reason == "refusal":
+        raise RuntimeError(f"model declined ({getattr(r.stop_details, 'category', None)})")
+    if r.stop_reason == "max_tokens":
+        raise RuntimeError("model output was cut off at max_tokens")
+    return "".join(b.text for b in r.content if b.type == "text")
+
+
 def llm_call(system, user, backend=None):
     if (backend or BACKEND) == "openai":
         from openai import OpenAI
@@ -36,10 +57,7 @@ def llm_call(system, user, backend=None):
         r = client.chat.completions.create(model=MODEL, messages=[
             {"role": "system", "content": system}, {"role": "user", "content": user}])
         return r.choices[0].message.content
-    import anthropic
-    r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=800, system=system,
-                                              messages=[{"role": "user", "content": user}])
-    return r.content[0].text
+    return anthropic_call(system, user)
 
 
 def pick(evidence):
