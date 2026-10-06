@@ -11,6 +11,10 @@ uvicorn>=0.29
 anthropic>=0.40
 openai>=1.40
 
+# Only for training/finetune.py (optional)
+datasets>=2.19
+accelerate>=0.30
+
 # Only for build_hadith_db.py dorar (maintainer tool, not runtime)
 beautifulsoup4>=4.12
 pytest>=8

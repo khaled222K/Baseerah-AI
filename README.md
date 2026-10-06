@@ -48,3 +48,35 @@ Without `--mode`, `ask.py` and the API use `BASEERAH_LLM` if set, otherwise retr
 3. **Hybrid retrieval** (`retrieve.py`): BM25 over `hadith_fts` and `rfts`, plus dense e5 search over all vectors, fused with Reciprocal Rank Fusion (k=60). The query and each rewrite add their own ranked lists. An optional multilingual cross-encoder reranker is behind `--rerank`.
 4. **Evidence gate** (`evidence.py`): a hit is shown only if it passes the existing similarity thresholds. If nothing passes: "لم أجد نصاً مباشراً مرتبطاً بالسؤال في المصادر المتاحة…". Personal-case questions are referred to scholars.
 5. **Explanation** (`answer.py`, modes b/c): the LLM may only pick IDs among the retrieved texts and write a short explanation. Any explanation that quotes text not present in the displayed passages is dropped (`quotes_ok`, using `verify.MARKS`).
+
+## Evaluation
+
+`eval_set.json` has 86 items: 44 hadith topic questions, 24 ayah questions, 10 quotes/paraphrases of hadith, and 8 out-of-scope questions. 33 are in Gulf dialect, 53 in MSA. Every expected ID was checked by reading the text in `baseerah.db`. No item is marked `unverified`; items marked that way would be excluded from scores. Expected lists can miss other narrations of the same hadith, so scores are a lower bound.
+
+Recall@k = share of questions with at least one expected hadith/ayah in the top k (a tafsir hit counts as its ayah). MRR is computed over the top 10. All numbers below come from `python evaluate.py` runs (`runs/*.json`, not committed).
+
+### Retrieval (78 scored questions)
+
+| variant | R@1 | R@3 | R@10 | MRR |
+|---|---|---|---|---|
+| FTS only (BM25) | 0.269 | 0.462 | 0.590 | 0.378 |
+| vector only (e5-small) | 0.333 | 0.449 | 0.577 | 0.405 |
+| hybrid (RRF) | 0.359 | 0.526 | 0.692 | 0.465 |
+| hybrid + reranker | 0.500 | 0.667 | 0.731 | 0.585 |
+| hybrid + reranker + rules rewrites (default) | 0.526 | 0.679 | 0.756 | 0.608 |
+
+- Reranker (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`): 23 questions improve, 12 get worse. It costs about 1.4 s/query on CPU. It is on by default (`BASEERAH_RERANK=0` turns it off).
+- Embedding the query with `norm()` instead of `clean()` hurts dense search (MRR 0.228 vs 0.405), because passages were embedded with `clean()`. So the dense side uses `clean()` and the lexical side uses `norm()`.
+- Rules rewrites help only Gulf questions. Because the lexicon was written after the eval questions, they were re-checked on `eval_gulf_holdout.json` (19 Gulf questions written afterwards): with the reranker, R@1 0.211 → 0.263, MRR 0.251 → 0.278 (one question). **Unseen Gulf dialect remains the weakest area** (MRR ≈ 0.28 vs 0.65 for MSA).
+
+### End to end, retrieval-only mode (`python evaluate.py --e2e legacy,hybrid+rerank`)
+
+| pipeline | expected text shown (78) | out-of-scope rejected (8) |
+|---|---|---|
+| original `semantic_search` (women-specific hadith only) | 27 | 5 |
+| hybrid + reranker, no rerank gate | 52 | 4 |
+| hybrid + reranker + gate `T_RERANK=-2.5` (default) | 47 | 7 |
+
+`T_RERANK` was picked on `calib_set.json` (the 14 questions in `evidence.py`'s `EVAL` plus 12 new out-of-scope ones), not on `eval_set.json`.
+
+Known limits: in retrieval-only mode there is no LLM relevance check, so a text can be shown because it shares a key word (e.g. "وش أجر اللي يبني مسجد؟" returns 9:107 about masjid al-ḍirār). One out-of-scope question in the eval set ("منو فاز بمباراة الهلال امس؟") still gets texts. The personal-case question in `evidence.py eval` now gets "no evidence" instead of a referral.
