@@ -1,0 +1,1082 @@
+{
+ "description": "Baseerah retrieval eval. expected = hadith:<hadith.id> or ayah:<surah>:<ayah> (a tafsir record counts as its ayah). Every expected ID was checked by reading the text in baseerah.db. Items with verified=false are excluded from scores. Expected lists may be incomplete (other narrations of the same hadith may exist), so scores are a lower bound.",
+ "items": [
+  {
+   "id": "h01",
+   "question": "ما أهمية النية في قبول الأعمال؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1",
+    "hadith:6445",
+    "hadith:6696",
+    "hadith:12068"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: انما الاعمال بالنيات / بالنيه"
+  },
+  {
+   "id": "h02",
+   "question": "وش أركان الإسلام الخمسة؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:8",
+    "hadith:4312",
+    "hadith:7297",
+    "hadith:7298",
+    "hadith:7299"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: بني الاسلام علي خمس"
+  },
+  {
+   "id": "h03",
+   "question": "وش وصية النبي للي يعصب بسرعة؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5884",
+    "hadith:5882",
+    "hadith:13757",
+    "hadith:13758"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لا تغضب / ليس الشديد بالصرعه"
+  },
+  {
+   "id": "h04",
+   "question": "ما حق الجار في الإسلام؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:5786",
+    "hadith:5787",
+    "hadith:13799",
+    "hadith:13801",
+    "hadith:5790",
+    "hadith:5904",
+    "hadith:6236",
+    "hadith:7357",
+    "hadith:7358",
+    "hadith:7360"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: يوصيني بالجار / فلا يؤذ جاره"
+  },
+  {
+   "id": "h05",
+   "question": "مين أحق واحد أبره من الناس؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5743",
+    "hadith:13618"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من احق بحسن صحابتي قال امك"
+  },
+  {
+   "id": "h06",
+   "question": "هل ورد في السنة فضل السواك عند الصلاة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:866",
+    "hadith:6966",
+    "hadith:7772"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لامرتهم بالسواك"
+  },
+  {
+   "id": "h07",
+   "question": "كيف الصلوات الخمس تمسح الذنوب؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:518",
+    "hadith:8694"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: نهرا بباب احدكم"
+  },
+  {
+   "id": "h08",
+   "question": "ما ثواب من صام رمضان إيمانا واحتسابا؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:38",
+    "hadith:1833",
+    "hadith:1941",
+    "hadith:8950"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من صام رمضان ايمانا واحتسابا"
+  },
+  {
+   "id": "h09",
+   "question": "وش يسوي الانسان اذا ما عنده كلام زين يقوله؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5790",
+    "hadith:5791",
+    "hadith:5903",
+    "hadith:5904",
+    "hadith:5906",
+    "hadith:6236",
+    "hadith:7357",
+    "hadith:11659"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: فليقل خيرا او ليصمت"
+  },
+  {
+   "id": "h10",
+   "question": "ما علامة كمال الإيمان في معاملة الأخ المسلم؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:13",
+    "hadith:7354",
+    "hadith:7355"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: حتي يحب لاخيه ما يحب لنفسه"
+  },
+  {
+   "id": "h11",
+   "question": "كم يوم الضيافة وش حق الضيف؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5790",
+    "hadith:5791",
+    "hadith:5903",
+    "hadith:5904",
+    "hadith:5906",
+    "hadith:6236",
+    "hadith:6237",
+    "hadith:7357",
+    "hadith:7358",
+    "hadith:7360",
+    "hadith:11659"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: فليكرم ضيفه / الضيافه ثلاثه ايام"
+  },
+  {
+   "id": "h12",
+   "question": "هل تقبيل الأطفال والرحمة بهم من السنة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:5769",
+    "hadith:5785",
+    "hadith:13149"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من لا يرحم لا يرحم"
+  },
+  {
+   "id": "h13",
+   "question": "ما جزاء الحج المبرور؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1708",
+    "hadith:10444"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: والحج المبرور ليس له جزاء الا الجنه"
+  },
+  {
+   "id": "h14",
+   "question": "كم درجة تزيد صلاة الجماعة على صلاة الواحد بروحه؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:630",
+    "hadith:634",
+    "hadith:8649"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: بسبع وعشرين درجه"
+  },
+  {
+   "id": "h15",
+   "question": "من هو المسلم الحقيقي؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:10",
+    "hadith:11",
+    "hadith:6245",
+    "hadith:7345",
+    "hadith:7346",
+    "hadith:7347"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من سلم المسلمون من لسانه ويده"
+  },
+  {
+   "id": "h16",
+   "question": "وش علامات المنافق؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:33",
+    "hadith:2574",
+    "hadith:2637",
+    "hadith:5863",
+    "hadith:7394",
+    "hadith:7396"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: ايه المنافق ثلاث"
+  },
+  {
+   "id": "h17",
+   "question": "كيف أتعامل مع الأمور المشتبهة بين الحلال والحرام؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:52",
+    "hadith:1977",
+    "hadith:11242",
+    "hadith:11245"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: الحلال بين والحرام بين"
+  },
+  {
+   "id": "h18",
+   "question": "من هم الذين يظلهم الله يوم القيامة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:642",
+    "hadith:1375",
+    "hadith:6240",
+    "hadith:6560",
+    "hadith:9541"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: سبعه يظلهم الله"
+  },
+  {
+   "id": "h19",
+   "question": "على أي أساس أختار الزوجة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:4886",
+    "hadith:10789"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: تنكح المراه لاربع"
+  },
+  {
+   "id": "h20",
+   "question": "يجوز الحرمة تسافر بدون محرم؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1055",
+    "hadith:1056",
+    "hadith:1159",
+    "hadith:1794",
+    "hadith:1923",
+    "hadith:10413",
+    "hadith:10416",
+    "hadith:10418",
+    "hadith:10427"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لا تسافر المراه"
+  },
+  {
+   "id": "h21",
+   "question": "الحائض تقضي الصلاة ولا الصيام بس؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:7945"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: تقضي الصوم ولا تقضي الصلاه"
+  },
+  {
+   "id": "h22",
+   "question": "ما آداب الأكل في السنة النبوية؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:5162",
+    "hadith:12409"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: سم الله وكل بيمينك"
+  },
+  {
+   "id": "h23",
+   "question": "وش أقول اذا عطست؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5989",
+    "hadith:5991",
+    "hadith:14580"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: اذا عطس احدكم"
+  },
+  {
+   "id": "h24",
+   "question": "ما فضل الصدق وعاقبة الكذب؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:5862",
+    "hadith:13751",
+    "hadith:13752",
+    "hadith:13753"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: الصدق يهدي الي البر"
+  },
+  {
+   "id": "h25",
+   "question": "ما معنى الغيبة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:13708"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: اتدرون ما الغيبه"
+  },
+  {
+   "id": "h26",
+   "question": "وش عقوبة اللي يقطع رحمه؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:5756",
+    "hadith:13637",
+    "hadith:13638"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لا يدخل الجنه قاطع"
+  },
+  {
+   "id": "h27",
+   "question": "هل يحب الله الرفق في التعامل؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:6670",
+    "hadith:13716"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: ان الله رفيق يحب الرفق"
+  },
+  {
+   "id": "h28",
+   "question": "هل المؤمن القوي أفضل من الضعيف؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:13886"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: المؤمن القوي خير"
+  },
+  {
+   "id": "h29",
+   "question": "الصدقة تنقص الفلوس؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:13707"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: ما نقصت صدقه من مال"
+  },
+  {
+   "id": "h30",
+   "question": "ما فضل كفالة اليتيم؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:5094",
+    "hadith:5777",
+    "hadith:14561"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: انا وكافل اليتيم / كافل اليتيم"
+  },
+  {
+   "id": "h31",
+   "question": "مين أفضل الناس في تعلم القرآن؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:4820"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: خيركم من تعلم القران وعلمه"
+  },
+  {
+   "id": "h32",
+   "question": "هل تصح الصلاة بغير وضوء بعد الحدث؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:6697",
+    "hadith:135"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لا يقبل الله صلاه احدكم اذا احدث / لا تقبل صلاه من احدث"
+  },
+  {
+   "id": "h33",
+   "question": "ليش نتسحر قبل الصيام؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:1854",
+    "hadith:9710"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: تسحروا فان في السحور بركه"
+  },
+  {
+   "id": "h34",
+   "question": "ما فضل تعجيل الفطور للصائم؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1886",
+    "hadith:9715"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: ما عجلوا الفطر"
+  },
+  {
+   "id": "h35",
+   "question": "نسيت وأكلت وأنا صايم، وش الحكم؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:9877"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من نسي وهو صائم"
+  },
+  {
+   "id": "h36",
+   "question": "كم مقدار زكاة الفطر؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1451",
+    "hadith:1452",
+    "hadith:1454",
+    "hadith:9440",
+    "hadith:9441",
+    "hadith:9444",
+    "hadith:9445",
+    "hadith:9446",
+    "hadith:9447"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: زكاه الفطر صاعا"
+  },
+  {
+   "id": "h37",
+   "question": "كيف أصلي صلاة الاستخارة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1132",
+    "hadith:7108"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: الاستخاره ... فليركع ركعتين من غير الفريضه"
+  },
+  {
+   "id": "h38",
+   "question": "وش أفضل صيغة للاستغفار؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:6069",
+    "hadith:6086"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: سيد الاستغفار"
+  },
+  {
+   "id": "h39",
+   "question": "ما الذكر الخفيف على اللسان الثقيل في الميزان؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:6167",
+    "hadith:6438",
+    "hadith:7277",
+    "hadith:13957"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: كلمتان خفيفتان علي اللسان"
+  },
+  {
+   "id": "h40",
+   "question": "متى يجوز الحسد أو الغبطة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:73",
+    "hadith:1361",
+    "hadith:4819",
+    "hadith:6872",
+    "hadith:7039",
+    "hadith:7243",
+    "hadith:9063",
+    "hadith:9065"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لا حسد الا في اثنتين"
+  },
+  {
+   "id": "h41",
+   "question": "أي الأعمال أحب إلى الله؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:6225",
+    "hadith:6226",
+    "hadith:8999"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: احب الاعمال ... ادومها وان قل"
+  },
+  {
+   "id": "h42",
+   "question": "وش أجر اللي يبني مسجد؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "hadith:443",
+    "hadith:8368",
+    "hadith:8369",
+    "hadith:14562",
+    "hadith:14563"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: من بني مسجدا"
+  },
+  {
+   "id": "h43",
+   "question": "ما حقوق المسلم على أخيه المسلم؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:1204",
+    "hadith:12781",
+    "hadith:12782"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: حق المسلم علي المسلم خمس / ست"
+  },
+  {
+   "id": "h44",
+   "question": "هل ورد حديث في تولية المرأة الحكم؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "hadith:4231",
+    "hadith:6834"
+   ],
+   "verified": true,
+   "evidence": "phrase read in matn: لن يفلح قوم ولوا امرهم امراه"
+  },
+  {
+   "id": "a01",
+   "question": "ما دليل فرض الصيام من القرآن؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:183"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a02",
+   "question": "وين آية الكرسي؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:255"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a03",
+   "question": "كيف الوضوء في القرآن؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:5:6"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a04",
+   "question": "ما الآية التي تأمر المؤمنات بغض البصر وستر الزينة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:24:31"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a05",
+   "question": "وش الآية اللي فيها الجلابيب؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:33:59"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a06",
+   "question": "ما الدليل القرآني على بر الوالدين؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:17:23",
+    "ayah:17:24",
+    "ayah:31:14",
+    "ayah:46:15"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a07",
+   "question": "حكم الربا في القرآن",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:275",
+    "ayah:2:278"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a08",
+   "question": "كيف يتقسم الورث بين العيال؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:4:11"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a09",
+   "question": "كم عدة المطلقة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:228",
+    "ayah:65:4"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a10",
+   "question": "كم عدة اللي مات عنها زوجها؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:234"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a11",
+   "question": "ما حكم الخمر والميسر في القرآن؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:5:90",
+    "ayah:2:219"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a12",
+   "question": "هل في إكراه في الدين؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:256"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a13",
+   "question": "كيف أستعين بالصبر والصلاة؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:153"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a14",
+   "question": "ما دليل وجوب الحج على المستطيع؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:3:97"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a15",
+   "question": "وش قصة تحويل القبلة للمسجد الحرام؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:144"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a16",
+   "question": "ما حكم التجسس وسوء الظن والغيبة في القرآن؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:49:12"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a17",
+   "question": "من قتل نفسا فكأنما قتل الناس جميعا",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:5:32"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a18",
+   "question": "الطلاق كم مرة؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:2:229"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a19",
+   "question": "هل يجب كتابة الدين؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:282"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a20",
+   "question": "هل الله قريب يجيب الدعاء؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:2:186"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a21",
+   "question": "كم يجوز للرجل يتزوج؟",
+   "dialect": "gulf",
+   "type": "topic",
+   "expected": [
+    "ayah:4:3"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a22",
+   "question": "ما حكم صلاة الجمعة وترك البيع عند الأذان؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:62:9"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a23",
+   "question": "هل يجوز قصر الصلاة في السفر؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:4:101"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "a24",
+   "question": "ما حكم الزنا في القرآن؟",
+   "dialect": "msa",
+   "type": "topic",
+   "expected": [
+    "ayah:17:32",
+    "ayah:24:2"
+   ],
+   "verified": true,
+   "evidence": "ayah text read in records.text_search"
+  },
+  {
+   "id": "q01",
+   "question": "الاعمال بالنيات وانما لكل امرئ ما نوى",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:1",
+    "hadith:6445",
+    "hadith:6696",
+    "hadith:12068"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q02",
+   "question": "ليس الشديد بالصرعة",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:5882",
+    "hadith:13757",
+    "hadith:13758"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q03",
+   "question": "سبحان الله وبحمده سبحان الله العظيم خفيفتان على اللسان",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:6167",
+    "hadith:6438",
+    "hadith:7277",
+    "hadith:13957"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q04",
+   "question": "الحديث اللي معناه ان القوي مو اللي يغلب الناس بالمصارعة، القوي اللي يمسك نفسه وقت الزعل",
+   "dialect": "gulf",
+   "type": "paraphrase",
+   "expected": [
+    "hadith:5882",
+    "hadith:13757",
+    "hadith:13758"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q05",
+   "question": "حديث ان جبريل ظل يوصي النبي بالجار لين ظن انه بيورثه",
+   "dialect": "gulf",
+   "type": "paraphrase",
+   "expected": [
+    "hadith:5786",
+    "hadith:5787",
+    "hadith:13799",
+    "hadith:13801"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q06",
+   "question": "تنكح المرأة لأربع لمالها ولحسبها",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:4886",
+    "hadith:10789"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q07",
+   "question": "حديث معناه ان الصدقة ما تنقص من المال",
+   "dialect": "gulf",
+   "type": "paraphrase",
+   "expected": [
+    "hadith:13707"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q08",
+   "question": "انا وكافل اليتيم في الجنة",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:5094",
+    "hadith:5777",
+    "hadith:14561"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q09",
+   "question": "لا يدخل الجنة قاطع",
+   "dialect": "msa",
+   "type": "quote",
+   "expected": [
+    "hadith:5756",
+    "hadith:13637",
+    "hadith:13638"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "q10",
+   "question": "حديث ان الحلال واضح والحرام واضح وبينهم أمور مشتبهة",
+   "dialect": "msa",
+   "type": "paraphrase",
+   "expected": [
+    "hadith:52",
+    "hadith:1977",
+    "hadith:11242",
+    "hadith:11245"
+   ],
+   "verified": true,
+   "evidence": "same hadith set as the matching topic item"
+  },
+  {
+   "id": "n01",
+   "question": "ما هي عاصمة فرنسا؟",
+   "dialect": "msa",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n02",
+   "question": "كيف اطبخ الكبسة",
+   "dialect": "msa",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n03",
+   "question": "سعر الذهب اليوم",
+   "dialect": "msa",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n04",
+   "question": "منو فاز بمباراة الهلال امس؟",
+   "dialect": "gulf",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n05",
+   "question": "كيف أصلح شاشة الجوال",
+   "dialect": "msa",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n06",
+   "question": "وش أفضل لابتوب للبرمجة",
+   "dialect": "gulf",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n07",
+   "question": "كم درجة الحرارة في الرياض بكرة",
+   "dialect": "gulf",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  },
+  {
+   "id": "n08",
+   "question": "اقترح لي اسم لمطعم",
+   "dialect": "msa",
+   "type": "negative",
+   "expected": [],
+   "verified": true,
+   "evidence": "out of scope: no religious text expected"
+  }
+ ]
+}

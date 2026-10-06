@@ -1,4 +1,4 @@
-import argparse, re, sqlite3
+import argparse, os, re, sqlite3
 from build_hadith_db import norm, strip_al, hadith_link, fts_query
 from semantic import semantic_search, GENERIC
 from verify import note_of
@@ -9,6 +9,7 @@ VEC = "embeddings.db"
 TAFSIR_NAME = "التفسير الميسر (مجمع الملك فهد)"
 T_LEX = 0.80
 T_HIGH = 0.92
+SEARCH = os.environ.get("BASEERAH_SEARCH", "hybrid")  # hybrid | legacy (semantic.semantic_search)
 PERSONAL = [
     "انا", "عندي", "حصل لي", "صار لي", "صارلي", "زوجي", "زوجتي", "حالتي", "وضعي", "هل يجوز لي",
     "هل يصح لي", "هل علي", "صلاتي", "صيامي", "حجي", "عمرتي", "ماذا افعل", "وش اسوي", "ايش اسوي",
@@ -45,24 +46,41 @@ def accepted(item):
     return item["similarity"] >= T_HIGH or (item["lex"] and item["similarity"] >= T_LEX)
 
 
-def assess(query, db_path=DB, vec_path=VEC, k=5):
-    if len(norm(query).split()) < 2:
-        return {"status": "clarify", "message": MESSAGES["clarify"], "evidence": [], "raw": []}
-    res = semantic_search(db_path, vec_path, query, k)
+def hadith_evidence(db, hid, query, similarity, lex):
+    """Evidence entry for one hadith; text and grade come from the database as stored."""
+    row = db.execute("SELECT * FROM hadith WHERE id=?", (hid,)).fetchone()
+    dorar = None
+    if row["dorar_grade"] and row["dorar_grade"] != "لم يُطابَق":
+        dorar = {"grade": row["dorar_grade"], "muhaddith": row["dorar_muhaddith"]}
+    return {"kind": "hadith", "id": hid, "ref": row["source_ref"], "number": row["number_in_book"],
+            "text": row["matn_display"], "topic": row["topic"], "grade": row["grade"],
+            "grade_basis": row["grade_source"], "dorar": dorar, "link": hadith_link(row), "note": note_of(db, hid),
+            "similarity": similarity, "lex": lex, "coverage": coverage(query, row["matn_display"])}
+
+
+def search(query, db_path, vec_path, k, how=None, rewrites=(), rerank=False):
+    if (how or SEARCH) == "legacy":
+        return semantic_search(db_path, vec_path, query, k)
+    from retrieve import hybrid_search
+    return hybrid_search(db_path, vec_path, query, k, rewrites=rewrites, rerank=rerank)
+
+
+def open_db(db_path):
     db = connect_ro(db_path)
     db.row_factory = sqlite3.Row
+    return db
+
+
+def assess(query, db_path=DB, vec_path=VEC, k=5, how=None, rewrites=(), rerank=False):
+    if len(norm(query).split()) < 2:
+        return {"status": "clarify", "message": MESSAGES["clarify"], "evidence": [], "raw": []}
+    res = search(query, db_path, vec_path, k, how, rewrites, rerank)
+    db = open_db(db_path)
     evidence, seen = [], set()
     for h in res["hadith"]:
         if not accepted(h):
             continue
-        row = db.execute("SELECT * FROM hadith WHERE id=?", (h["id"],)).fetchone()
-        dorar = None
-        if row["dorar_grade"] and row["dorar_grade"] != "لم يُطابَق":
-            dorar = {"grade": row["dorar_grade"], "muhaddith": row["dorar_muhaddith"]}
-        evidence.append({"kind": "hadith", "ref": h["source"], "text": h["text"], "topic": h["topic"],
-                         "grade": row["grade"], "grade_basis": row["grade_source"], "dorar": dorar,
-                         "link": hadith_link(row), "note": note_of(db, h["id"]), "similarity": h["similarity"], "lex": h["lex"],
-                         "coverage": coverage(query, h["text"])})
+        evidence.append(hadith_evidence(db, h["id"], query, h["similarity"], h["lex"]))
     for r in res["records"]:
         f = r["fields"]
         if r["type"] == "tafsir" and accepted(r):
@@ -103,10 +121,10 @@ EVAL = [
 ]
 
 
-def run_eval(db_path, vec_path):
+def run_eval(db_path, vec_path, how=None):
     ok = 0
     for q, want in EVAL:
-        a = assess(q, db_path, vec_path)
+        a = assess(q, db_path, vec_path, how=how)
         got = a["status"]
         ok += got == want
         ev = a["evidence"]
@@ -141,9 +159,10 @@ if __name__ == "__main__":
     ap.add_argument("--vec", default=VEC)
     ap.add_argument("--t-lex", type=float, default=T_LEX)
     ap.add_argument("--t-high", type=float, default=T_HIGH)
+    ap.add_argument("--search", choices=["hybrid", "legacy"], default=SEARCH)
     a = ap.parse_args()
     T_LEX, T_HIGH = a.t_lex, a.t_high
     if a.cmd == "eval":
-        run_eval(a.db, a.vec)
+        run_eval(a.db, a.vec, a.search)
     else:
-        show(assess(a.query, a.db, a.vec))
+        show(assess(a.query, a.db, a.vec, how=a.search))
