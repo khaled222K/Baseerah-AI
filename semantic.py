@@ -59,10 +59,10 @@ def open_vec(path):
     return v
 
 
-def collect(db, text_cols):
+def collect(db, text_cols, hadith_scope="all"):
     items = []
-    for hid, shown, topic in db.execute(
-            "SELECT id, matn_display, topic FROM hadith WHERE women_relevance!='none'"):
+    where = "" if hadith_scope == "all" else " WHERE women_relevance!='none'"
+    for hid, shown, topic in db.execute("SELECT id, matn_display, topic FROM hadith" + where):
         items.append(("hadith", hid, clean(f"{topic or ''}. {shown}")))
     if text_cols:
         cols = ", ".join(f'"{c}"' for c in text_cols)
@@ -78,11 +78,11 @@ def collect(db, text_cols):
     return items
 
 
-def embed(db_path, vec_path, model_name, text_cols, batch):
+def embed(db_path, vec_path, model_name, text_cols, batch, hadith_scope="all"):
     db = connect_ro(db_path, timeout=60)
     cols = text_columns(db, text_cols)
     print("أعمدة records المستخدمة:", "، ".join(cols))
-    items = collect(db, cols)
+    items = collect(db, cols, hadith_scope)
     vdb = open_vec(vec_path)
     ensure_rfts(vdb, db)
     db.close()
@@ -251,12 +251,13 @@ if __name__ == "__main__":
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--text-cols", default="")
     ap.add_argument("--batch", type=int, default=32)
+    ap.add_argument("--hadith-scope", choices=["all", "women"], default="all")
     ap.add_argument("--query", default="")
     ap.add_argument("--k", type=int, default=5)
     a = ap.parse_args()
     if a.cmd == "show":
         show(a.db)
     elif a.cmd == "embed":
-        embed(a.db, a.vec, a.model, [c for c in a.text_cols.split(",") if c], a.batch)
+        embed(a.db, a.vec, a.model, [c for c in a.text_cols.split(",") if c], a.batch, a.hadith_scope)
     else:
         print_results(semantic_search(a.db, a.vec, a.query, a.k))
