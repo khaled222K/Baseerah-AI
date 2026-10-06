@@ -177,11 +177,52 @@ def sources():
             "dorar_matched": count("SELECT count(*) FROM hadith WHERE dorar_grade IS NOT NULL AND dorar_grade != 'لم يُطابَق'")}}
 
 
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0", "host.docker.internal"}
+
+
+def ollama_details(base_url, model):
+    """Size and quantization reported by an Ollama server for model, or None (other servers, or unreachable)."""
+    import urllib.request
+    root = base_url.rstrip("/").removesuffix("/v1")
+    try:
+        req = urllib.request.Request(f"{root}/api/show", data=json.dumps({"model": model}).encode(),
+                                     headers={"Content-Type": "application/json"})
+        d = json.load(urllib.request.urlopen(req, timeout=2))
+    except Exception:
+        return None
+    info, det = d.get("model_info") or {}, d.get("details") or {}
+    ctx = next((v for k, v in info.items() if k.endswith(".context_length")), None)
+    return {"server": "Ollama", "family": det.get("family"), "parameter_size": det.get("parameter_size"),
+            "quantization": det.get("quantization_level"), "format": det.get("format"), "context_length": ctx}
+
+
+def runtime_info(mode):
+    """How the active LLM runs: where, with which settings, and what happens when it fails. No keys or full URLs."""
+    if mode == "retrieval":
+        return {"location": None, "fallback": "لا يوجد نموذج لغوي: تُعرض النصوص المسترجعة فقط."}
+    from urllib.parse import urlparse
+    from answer import LLM_MAX_TOKENS, FALLBACK_MODELS
+    understanding = os.environ.get("BASEERAH_UNDERSTAND") or ("rules" if mode == "openai" else mode)
+    out = {"understanding": understanding,
+           "explain_glosses": os.environ.get("BASEERAH_EXPLAIN_WORDS", "0" if mode == "openai" else "1") == "1",
+           "timeout_ms": int(os.environ.get("BASEERAH_TIMEOUT_MS", "300000" if mode == "openai" else "90000")),
+           "fallback": "عند تعذر الاتصال بالنموذج تُعرض النصوص المسترجعة بمراجعها دون شرح مولَّد."}
+    if mode == "anthropic":
+        out.update(location="remote", host="api.anthropic.com", max_tokens=LLM_MAX_TOKENS,
+                   server_fallback=MODEL in FALLBACK_MODELS and os.environ.get("BASEERAH_FALLBACKS", "1") != "0")
+    else:
+        base = os.environ.get("BASEERAH_BASE_URL") or "https://api.openai.com/v1"
+        host = urlparse(base).hostname or ""
+        out.update(location="local" if host in LOCAL_HOSTS else "remote", host=host, json_mode=True,
+                   details=ollama_details(base, MODEL) if host in LOCAL_HOSTS else None)
+    return out
+
+
 @app.get("/model-info")
 def model_info():
     import evidence
     from db import connect_ro
-    from retrieve import RERANKER, RRF_K
+    from retrieve import RERANKER, RRF_K, POOL, RERANK_POOL, RERANK_REWRITES
     mode = default_mode()
     emb = connect_ro(VEC).execute("SELECT v FROM meta WHERE k='model'").fetchone()[0]
     metrics = ROOT / "eval_metrics.json"
@@ -190,8 +231,12 @@ def model_info():
         "model_name": None if mode == "retrieval" else MODEL,
         "provider": {"anthropic": "Anthropic", "openai": "OpenAI-compatible"}.get(mode),
         "model_version": None,
+        "runtime": runtime_info(mode),
         "retrieval": {"embedding_model": emb, "reranker": RERANKER if evidence.RERANK else None,
-                      "lexical": "SQLite FTS5 (BM25)", "fusion": f"Reciprocal Rank Fusion (k={RRF_K})"},
+                      "lexical": "SQLite FTS5 (BM25)", "fusion": f"Reciprocal Rank Fusion (k={RRF_K})",
+                      "candidates": POOL, "rerank_pool": RERANK_POOL if evidence.RERANK else None,
+                      "rerank_rewrites": RERANK_REWRITES if evidence.RERANK else None,
+                      "hf_offline": os.environ.get("HF_HUB_OFFLINE") == "1", "databases_read_only": True},
         "abstention": {"min_similarity": evidence.T_LEX, "high_similarity": evidence.T_HIGH,
                        "min_rerank_score": evidence.T_RERANK if evidence.RERANK else None},
         "evaluation": json.load(open(metrics, encoding="utf-8")) if metrics.exists() else None,

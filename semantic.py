@@ -1,4 +1,5 @@
 import argparse, functools, re, sqlite3, sys, time
+import envfile  # noqa: F401  (.env, and offline Hugging Face mode once the models are cached)
 import numpy as np
 from db import connect_ro
 
