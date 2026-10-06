@@ -51,4 +51,5 @@ def test_sources_and_model_info(client):
     assert cats["quran"]["count"] == 6236 and cats["hadith"]["count"] == 14736 and cats["tafsir"]["count"] == 6236
     m = client.get("/model-info").json()
     assert m["retrieval"]["embedding_model"] == "intfloat/multilingual-e5-small"
+    assert m["retrieval"]["databases_read_only"] is True and "runtime" in m
     assert m["evaluation"] is None or m["evaluation"]["retrieval"][-1]["MRR"] > 0

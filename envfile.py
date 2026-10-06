@@ -21,4 +21,29 @@ def load(path=None):
             os.environ[key] = value
 
 
+# Models loaded at runtime (semantic.MODEL and retrieve.RERANKER; tests/test_offline.py checks they stay in sync).
+HF_MODELS = ("intfloat/multilingual-e5-small", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+
+
+def hf_cache():
+    if os.environ.get("HF_HUB_CACHE"):
+        return Path(os.environ["HF_HUB_CACHE"])
+    return Path(os.environ.get("HF_HOME") or Path.home() / ".cache" / "huggingface") / "hub"
+
+
+def offline_if_cached(models=HF_MODELS):
+    """Once both models are in the local Hugging Face cache, turn off all Hub calls (update checks included),
+    so a running Baseerah never contacts huggingface.co. An explicit HF_HUB_OFFLINE=0 or 1 is left alone.
+    This must run before huggingface_hub is imported, which reads the variable at import time."""
+    if "HF_HUB_OFFLINE" in os.environ:
+        return os.environ["HF_HUB_OFFLINE"] == "1"
+    cache = hf_cache()
+    if all(any((cache / f"models--{m.replace('/', '--')}" / "snapshots").glob("*/")) for m in models):
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+        return True
+    return False
+
+
 load()
+offline_if_cached()
