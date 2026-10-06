@@ -5,6 +5,8 @@ import argparse, json, re, sqlite3, sys, time, urllib.parse, urllib.request
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from db import connect_ro
+
 BOOK_AR = {"bukhari": "صحيح البخاري", "muslim": "صحيح مسلم"}
 NO_MATCH = "لم يُطابَق"
 
@@ -262,7 +264,7 @@ def to_record(r) -> dict:
 
 
 def search(db_path: Path, query: str, k: int = 5, include_general: bool = False, as_json: bool = False):
-    db = sqlite3.connect(db_path)
+    db = connect_ro(db_path)
     db.row_factory = sqlite3.Row
     rel = "('specific','general_applicable')" if include_general else "('specific')"
     rows = db.execute(
@@ -285,7 +287,7 @@ def search(db_path: Path, query: str, k: int = 5, include_general: bool = False,
 
 
 def export(db_path: Path, out: Path):
-    db = sqlite3.connect(db_path)
+    db = connect_ro(db_path)
     db.row_factory = sqlite3.Row
     n = 0
     with open(out, "w", encoding="utf-8") as f:

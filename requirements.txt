@@ -1,0 +1,15 @@
+# Retrieval (local, no network at query time once the model is cached)
+numpy>=1.26
+sentence-transformers>=3.0
+torch>=2.2            # CPU wheel is enough: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# API
+fastapi>=0.110
+uvicorn>=0.29
+
+# Optional LLM explanation backends (mode b / c). Retrieval never calls them.
+anthropic>=0.40
+openai>=1.40
+
+# Only for build_hadith_db.py dorar (maintainer tool, not runtime)
+beautifulsoup4>=4.12

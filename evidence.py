@@ -2,6 +2,7 @@ import argparse, re, sqlite3
 from build_hadith_db import norm, strip_al, hadith_link, fts_query
 from semantic import semantic_search, GENERIC
 from verify import note_of
+from db import connect_ro
 
 DB = "baseerah.db"
 VEC = "embeddings.db"
@@ -48,7 +49,7 @@ def assess(query, db_path=DB, vec_path=VEC, k=5):
     if len(norm(query).split()) < 2:
         return {"status": "clarify", "message": MESSAGES["clarify"], "evidence": [], "raw": []}
     res = semantic_search(db_path, vec_path, query, k)
-    db = sqlite3.connect(db_path)
+    db = connect_ro(db_path)
     db.row_factory = sqlite3.Row
     evidence, seen = [], set()
     for h in res["hadith"]:

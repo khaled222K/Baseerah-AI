@@ -1,5 +1,6 @@
 import argparse, functools, re, sqlite3, sys, time
 import numpy as np
+from db import connect_ro
 
 MODEL = "intfloat/multilingual-e5-small"
 VEC_DB = "embeddings.db"
@@ -30,7 +31,7 @@ def text_columns(db, override=None):
 
 
 def show(db_path):
-    db = sqlite3.connect(db_path)
+    db = connect_ro(db_path)
     cols, avg = records_columns(db)
     print("أعمدة جدول records:")
     for c in cols:
@@ -78,12 +79,13 @@ def collect(db, text_cols):
 
 
 def embed(db_path, vec_path, model_name, text_cols, batch):
-    db = sqlite3.connect(db_path, timeout=60)
+    db = connect_ro(db_path, timeout=60)
     cols = text_columns(db, text_cols)
     print("أعمدة records المستخدمة:", "، ".join(cols))
     items = collect(db, cols)
-    db.close()
     vdb = open_vec(vec_path)
+    ensure_rfts(vdb, db)
+    db.close()
     old = vdb.execute("SELECT v FROM meta WHERE k='model'").fetchone()
     if old and old[0] != model_name:
         sys.exit(f"الملف {vec_path} مبني بنموذج ثاني ({old[0]}). احذفه أو غيّر --vec")
@@ -167,8 +169,8 @@ def records_fts_ids(vdb, query, n):
 
 
 def semantic_search(db_path, vec_path, query, k=5, pool=30):
-    db = sqlite3.connect(db_path, timeout=60)
-    vdb = open_vec(vec_path)
+    db = connect_ro(db_path, timeout=60)
+    vdb = connect_ro(vec_path, timeout=60)
     model_name = vdb.execute("SELECT v FROM meta WHERE k='model'").fetchone()[0]
     model = load_model(model_name)
     q = model.encode([prefix(model_name, "query") + clean(query)], normalize_embeddings=True)[0].astype(np.float32)
@@ -202,7 +204,8 @@ def semantic_search(db_path, vec_path, query, k=5, pool=30):
     records = []
     if rids:
         rs = rmat @ q
-        ensure_rfts(vdb, db)
+        if not vdb.execute("SELECT 1 FROM sqlite_master WHERE name='rfts'").fetchone():
+            raise RuntimeError(f"فهرس rfts غير موجود في {vec_path}. شغّل: python semantic.py embed")
         names = [d[0] for d in db.execute("SELECT * FROM records LIMIT 0").description]
         kinds = dict(db.execute("SELECT rowid, type FROM records")) if "type" in names else {}
         pos = {rid: j for j, rid in enumerate(rids)}

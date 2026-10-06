@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.pytest_cache/
+
+# downloaded / generated build inputs and outputs
+data/
+data_build/*.db
+models/
+runs/
+*.jsonl
+!training/*.jsonl
+
+# sqlite side files
+*.db-journal
+*.db-wal
+*.db-shm
