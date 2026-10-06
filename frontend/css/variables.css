@@ -1,0 +1,59 @@
+/* Baseerah design tokens. Brand colors are fixed; the shades below are derived for contrast. */
+:root {
+  --plum: #4B243F;
+  --rose: #B85C85;
+  --mauve: #D7B4C8;
+  --lavender: #B9A4E8;
+  --cream: #FFF8F5;
+
+  --plum-800: #3A1B31;
+  --plum-600: #5E2E50;
+  --rose-700: #8A3F66;          /* rose text/links on light surfaces (AA) */
+  --rose-600: #9C4A72;          /* primary button fill: white text passes AA */
+  --rose-100: #F7E4EC;
+  --rose-50: #FCF1F5;
+  --mauve-200: #EBD9E3;
+  --lavender-100: #EEE8FB;
+
+  --ink: #2E1A28;
+  --text: #3F2A38;
+  --muted: #6E5866;
+  --line: #EADCE3;
+  --line-strong: #DCC6D2;
+  --surface: #FFFFFF;
+  --surface-soft: #FFFBF9;
+  --bg: var(--cream);
+  --success: #2F7A5A;
+  --success-bg: #E8F4EE;
+  --warn: #8A5A12;
+  --warn-bg: #FBF1DF;
+  --danger: #A23A4A;
+  --danger-bg: #FBE9EC;
+
+  --font-head: "Alexandria", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Arabic", "Alexandria", system-ui, sans-serif;
+
+  --fs-xs: 0.78rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
+  --fs-hero: clamp(1.9rem, 1.3rem + 2.6vw, 3.1rem);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(75, 36, 63, 0.06), 0 1px 3px rgba(75, 36, 63, 0.05);
+  --shadow-md: 0 6px 18px rgba(75, 36, 63, 0.08);
+  --shadow-lg: 0 18px 48px rgba(75, 36, 63, 0.12);
+  --focus: 0 0 0 3px rgba(185, 164, 232, 0.65);
+
+  --sidebar-w: 272px;
+  --topbar-h: 64px;
+  --content-w: 860px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
