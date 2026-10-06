@@ -3,7 +3,7 @@
 How the two halves connect:
 
 ```
-visitor ──► https://baseerah-ai-sss-rank-team.vercel.app      (Vercel: the pages in frontend/)
+visitor ──► https://baseerah-ai-sigma.vercel.app             (Vercel: the pages in frontend/)
                 │  questions (fetch)
                 ▼
           https://<your-name>.ngrok-free.app                  (ngrok: a fixed public address)
@@ -44,7 +44,7 @@ visitor ──► https://baseerah-ai-sss-rank-team.vercel.app      (Vercel: the
 
 5. Let the Vercel site call your API. Add this line to `.env` in the project folder:
    ```
-   BASEERAH_CORS_ORIGINS=https://baseerah-ai-sss-rank-team.vercel.app
+   BASEERAH_CORS_ORIGINS=https://baseerah-ai-sigma.vercel.app,https://baseerah-ai-sss-rank-team.vercel.app
    ```
 
 6. Send the domain from step 4 (the domain only, never the token) to Claude, or set it yourself:
@@ -68,7 +68,7 @@ uvicorn api:app --port 8000
 ngrok http --url=https://calm-owl-123.ngrok-free.app 8000
 ```
 
-Then open https://baseerah-ai-sss-rank-team.vercel.app.
+Then open https://baseerah-ai-sigma.vercel.app.
 
 ## Checks
 
