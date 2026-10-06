@@ -1,0 +1,78 @@
+{
+ "eval_set": "eval_set.json (78 scored questions with verified expected IDs + 8 out-of-scope questions)",
+ "definitions": {
+  "R@k": "نسبة الأسئلة التي ظهر فيها حديث أو آية متوقعة ضمن أول k نتائج",
+  "MRR": "متوسط مقلوب ترتيب أول نتيجة صحيحة ضمن أول 10 نتائج (1 = الأولى دائمًا)"
+ },
+ "retrieval": [
+  {
+   "variant": "fts",
+   "R@1": 0.269,
+   "R@3": 0.462,
+   "R@10": 0.59,
+   "MRR": 0.378,
+   "n": 78
+  },
+  {
+   "variant": "vector",
+   "R@1": 0.333,
+   "R@3": 0.449,
+   "R@10": 0.577,
+   "MRR": 0.405,
+   "n": 78
+  },
+  {
+   "variant": "hybrid",
+   "R@1": 0.359,
+   "R@3": 0.526,
+   "R@10": 0.692,
+   "MRR": 0.465,
+   "n": 78
+  },
+  {
+   "variant": "hybrid+rerank",
+   "R@1": 0.5,
+   "R@3": 0.667,
+   "R@10": 0.731,
+   "MRR": 0.585,
+   "n": 78
+  },
+  {
+   "variant": "hybrid+rerank+rewrites (default)",
+   "R@1": 0.526,
+   "R@3": 0.679,
+   "R@10": 0.756,
+   "MRR": 0.608,
+   "n": 78
+  }
+ ],
+ "gulf_holdout": {
+  "variant": "default",
+  "R@1": 0.263,
+  "R@3": 0.263,
+  "R@10": 0.368,
+  "MRR": 0.278,
+  "n": 19
+ },
+ "end_to_end": {
+  "default": {
+   "expected_text_shown": 47,
+   "positives": 78,
+   "out_of_scope_rejected": 7,
+   "out_of_scope": 8
+  },
+  "original_pipeline": {
+   "expected_text_shown": 27,
+   "positives": 78,
+   "out_of_scope_rejected": 5,
+   "out_of_scope": 8
+  }
+ },
+ "caveats": [
+  "عينة صغيرة (78 سؤالًا)، وهامش الخطأ نحو ±11 نقطة مئوية.",
+  "قوائم الإجابات المتوقعة قد لا تشمل كل روايات الحديث، فالنتائج حدّ أدنى.",
+  "أسئلة الاختبار كتبها مطوّر النظام نفسه، ولم تُختبر بعد على أسئلة مستخدمين حقيقيين.",
+  "اللهجة الخليجية غير المرئية أضعف بكثير من الفصحى.",
+  "لم يُقَس وضع الشرح المولَّد بالنموذج اللغوي."
+ ]
+}
