@@ -79,7 +79,7 @@ Recall@k = share of questions with at least one expected hadith/ayah in the top 
 
 `T_RERANK` was picked on `calib_set.json` (the 14 questions in `evidence.py`'s `EVAL` plus 12 new out-of-scope ones), not on `eval_set.json`.
 
-Known limits: in retrieval-only mode there is no LLM relevance check, so a text can be shown because it shares a key word (e.g. "وش أجر اللي يبني مسجد؟" returns 9:107 about masjid al-ḍirār). One out-of-scope question in the eval set ("منو فاز بمباراة الهلال امس؟") still gets texts. The personal-case question in `evidence.py eval` now gets "no evidence" instead of a referral.
+Known limits: in retrieval-only mode there is no LLM relevance check, so a text can be shown because it shares a key word (e.g. "وش أجر اللي يبني مسجد؟" returns 9:107 about masjid al-ḍirār). One out-of-scope question in the eval set ("سعر الذهب اليوم") still gets texts (hadith about gold share its key word). The personal-case question in `evidence.py eval` now gets "no evidence" instead of a referral.
 
 ### Fine-tuning (stage 6, optional, not adopted)
 
